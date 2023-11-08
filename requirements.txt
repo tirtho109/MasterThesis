@@ -1,0 +1,1 @@
+latexcodec==2.0.1
