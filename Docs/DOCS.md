@@ -15,7 +15,7 @@
 * Try to fit the model with noisy data. (**should not be too much noisy**) **Not done**
 
 **Remarks**:
-* need to check plagarism checker with CSE-office
+* need to check plagarism checker with CSE-office [Not Done Yet]
 
 **DATE:Th,26-10-2023**
 * Try train-test with time segment. z.B. 1-5 months, 5-10 months, 10-15 months (including the initial condition for all cases)
@@ -24,19 +24,20 @@
 
 **Remarks**: Null
 
-**DATE:**
-* A
-* B
+**DATE:Th, 09-11-2023**
+* Plot results and true value together
+* Make OOP structure
 * C
 
-**Remarks**: Null
+**Remarks**: working with SciANN only
 
-**DATE:**
-* A
-* B
-* C
+**DATE:Th, 16-11-2023**
+* Plot separate loss [data & ODE]
+* Try with different NN architecture and so on.
+* Plot the ode using learned parameter
+* Keep notes of the work(slides/docs/Latex)
 
-**Remarks**: Null
+**Remarks**: working with SciANN only. If done, start with PySINDy
 
 **DATE:**
 * A
