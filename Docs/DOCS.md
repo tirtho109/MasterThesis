@@ -39,6 +39,20 @@
 
 **Remarks**: working with SciANN only. If done, start with PySINDy
 
+**DATE: Th, 23-11-2023**
+* Plot NN model prediction along with the true & learned param. based ode solution.
+* add noise to the IC
+* Find bug for Comp. model & fix it asap.
+
+**Remarks**: Null
+
+**DATE:**
+* A
+* B
+* C
+
+**Remarks**: Null
+
 **DATE:**
 * A
 * B
