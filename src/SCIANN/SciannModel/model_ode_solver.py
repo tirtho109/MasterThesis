@@ -13,8 +13,12 @@ import plotly.io as pio
 from abc import ABC, abstractmethod
 
 class BaseModel(ABC):
-    def __init__(self):
-        pass
+    def __init__(self, initial_conditions, tend):
+        if tend <= 0:
+            raise ValueError("End time 'tend' must be greater than zero.")
+
+        self.initial_conditions = initial_conditions
+        self.tend = tend
 
     @abstractmethod
     def _model(self, state, t):
@@ -39,12 +43,75 @@ class BaseModel(ABC):
         """
         pass
 
+    def generate_training_data(self, numpoints=500, 
+                      sparse=False, time_limit=None, 
+                      noise_level=0.0, show_figure=False):
+        """
+        Generates training data by solving the ODE and optionally adding noise.
+
+        Parameters:
+        - numpoints: int, optional (default=500)
+            The number of data points to generate.
+        - sparse: bool, optional (default=False)
+            Whether to generate data points sparsely. If True, points are randomly distributed; if False, points are evenly spaced.
+        - time_limit: list or tuple, optional (default=None)
+            A time window for data generation as [start_time, end_time]. If None, the entire range up to 'tend' is used.
+        - noise_level: float, optional (default=0.0)
+            The level of Gaussian noise to add to the data.
+        - show_figure: bool, optional (default=False)
+            If True, a scatter plot of the generated data is shown.
+
+        Returns:
+        - tTrain: numpy.ndarray
+            The time points of the training data.
+        - sol_noisy: numpy.ndarray
+            The solution of the ODE at the time points in 'tTrain', with noise added if 'noise_level' > 0.
+
+        Raises:
+        - ValueError: If 'tend' is less than or equal to zero, 'numpoints' is less than or equal to one, 
+                    or 'time_limit' is not a list/tuple of two increasing values greater than zero.
+        """
+         # check conditions
+        if numpoints <=1:
+            raise ValueError("Numer of points 'numpoints' must be greater than one.")
+        if time_limit is not None:
+            if not isinstance(time_limit, (list, tuple)) or len(time_limit) != 2:
+                raise ValueError("Time limit 'time_limit' must be a list or tuple with two elements.")
+            if not 0 <= time_limit[0] < time_limit[1]:
+                raise ValueError("Time limit 'time_limit' must contain increasing values greater than zero.")
+        # sparsity 
+        if sparse:
+            tTrain = np.sort(np.random.uniform(0, self.tend, numpoints))
+            tTrain[0] = 0.0
+        else:
+            tTrain = np.linspace(0, self.tend, numpoints)
+
+        t_span, sol = self.solve_ode(self.initial_conditions, tTrain)
+
+        if time_limit is None:
+            time_limit = [0, self.tend]
+        mask = (t_span == t_span[0]) | ((t_span >= time_limit[0]) & (t_span <= time_limit[1]))
+        tTrain = t_span[mask]
+        sol = sol[mask]
+
+        noise = np.random.normal(0, noise_level, sol.shape)
+        sol_noisy = sol + noise
+        
+        if show_figure:
+            for i in range(sol_noisy.shape[1]):
+                plt.scatter(tTrain, sol_noisy[:,i], label=f'Cell Population {i+1}')
+                plt.legend()
+            plt.title('Training Points')
+            plt.xlabel('t')
+            plt.ylabel('Population')
+            plt.show()
+        return tTrain, sol_noisy
+
+
 class SaturatedGrowthModel(BaseModel):
     def __init__(self, C, initial_conditions, tend):
-        super().__init__()
+        super().__init__(initial_conditions, tend)
         self.C = C
-        self.initial_conditions = initial_conditions
-        self.tend = tend
 
     def _model(self, u, t):
         return u*(self.C -u)
@@ -73,10 +140,8 @@ class SaturatedGrowthModel(BaseModel):
 
 class CompetitionModel(BaseModel):
     def __init__(self, params, initial_conditions, tend):
-        super().__init__()
+        super().__init__(initial_conditions, tend)
         self.params = params
-        self.initial_conditions = initial_conditions
-        self.tend = tend
 
     def _model(self, q, t):
         u, v = q
@@ -107,70 +172,6 @@ class CompetitionModel(BaseModel):
 
         if created_fig:
             return fig
-
-def create_train_data(model, tend, 
-                      initial_conditions, numpoints=500, 
-                      sparse=False, time_limit=None, 
-                      noise_level=0.0, show_figure=False):
-    """
-    Generates training data for a given model.
-    
-    Parameters:
-    model : instance of a model class, must have a solve_ode method
-    tend : end time for the data generation
-    initial_cond : initial conditions for the ODE
-    numpoints : number of data points to generate
-    sparse : whether to generate data points sparsely
-    time_limit : time window for data generation
-    noise_level : level of noise to add to the data
-
-    Returns:
-    A tuple of (tTrain, training_data), where training_data can be a list of arrays for models with multiple outputs.
-    """
-    # check conditions
-    if tend <= 0:
-        raise ValueError("End time 'tend' must be greater than zero.")
-    if numpoints <=1:
-        raise ValueError("Numer of points 'numpoints' must be greater than one.")
-    if time_limit is not None:
-        if not isinstance(time_limit, (list, tuple)) or len(time_limit) != 2:
-            raise ValueError("Time limit 'time_limit' must be a list or tuple with two elements.")
-        if not 0 <= time_limit[0] < time_limit[1]:
-            raise ValueError("Time limit 'time_limit' must contain increasing values greater than zero.")
-
-    # sparsity 
-    if sparse:
-        tTrain = np.sort(np.random.uniform(0, tend, numpoints))
-        tTrain[0] = 0.0
-    else:
-        tTrain = np.linspace(0, tend, numpoints)
-
-    t_span, sol = model.solve_ode(initial_conditions, tTrain)
-
-    if time_limit is None:
-        time_limit = [0, tend]
-
-    mask = (t_span == t_span[0]) | ((t_span >= time_limit[0]) & (t_span <= time_limit[1]))
-    # mask = ((t_span >= time_limit[0]) & (t_span <= time_limit[1]))
-    tTrain = t_span[mask]
-    sol = sol[mask]
-
-    noise = np.random.normal(0, noise_level, sol.shape)
-    sol_noisy = sol.copy()
-    for col in range(sol_noisy.shape[1]):
-        sol_noisy[1:, col] += noise[1:, col]
-
-    if show_figure:
-        for i in range(sol_noisy.shape[1]):
-            plt.scatter(tTrain, sol_noisy[:,i], label=f'Cell Population {i+1}')
-            plt.legend()
-        plt.title('Training Points')
-        plt.xlabel('t')
-        plt.ylabel('Population')
-        plt.show()
-
-    return tTrain, sol_noisy
-
 
 def model_comparison(true_model, predicted_model):
     t_span = np.arange(0, true_model.tend, 0.01)
