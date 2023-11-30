@@ -36,7 +36,7 @@ class BaseModel(ABC):
         return t_span, solution
     
     @abstractmethod
-    def plot_solution(self, initial_conditions, t_end):
+    def plot_solution(self, ax=None, set_title=None):
         """
         Plots the solution of the ODE.
         This abstract method must be implemented by child classes.
@@ -45,31 +45,24 @@ class BaseModel(ABC):
 
     def generate_training_data(self, numpoints=500, 
                       sparse=False, time_limit=None, 
-                      noise_level=0.0, show_figure=False):
+                      noise_level=0.0, show_figure=False,
+                      save_path=None):
         """
-        Generates training data by solving the ODE and optionally adding noise.
+        Generates training data by solving an ODE, with options for sparsity, time limits, noise addition, and visualization.
 
         Parameters:
-        - numpoints: int, optional (default=500)
-            The number of data points to generate.
-        - sparse: bool, optional (default=False)
-            Whether to generate data points sparsely. If True, points are randomly distributed; if False, points are evenly spaced.
-        - time_limit: list or tuple, optional (default=None)
-            A time window for data generation as [start_time, end_time]. If None, the entire range up to 'tend' is used.
-        - noise_level: float, optional (default=0.0)
-            The level of Gaussian noise to add to the data.
-        - show_figure: bool, optional (default=False)
-            If True, a scatter plot of the generated data is shown.
+        - numpoints (int, optional): Number of data points (default 500).
+        - sparse (bool, optional): Toggle for sparse data generation (default False).
+        - time_limit (list/tuple, optional): Time window [start, end] for data generation (default None).
+        - noise_level (float, optional): Level of Gaussian noise to add (default 0.0).
+        - show_figure (bool, optional): Show scatter plot of data if True (default False).
 
         Returns:
-        - tTrain: numpy.ndarray
-            The time points of the training data.
-        - sol_noisy: numpy.ndarray
-            The solution of the ODE at the time points in 'tTrain', with noise added if 'noise_level' > 0.
+        - tTrain (numpy.ndarray): Time points of the training data.
+        - sol_noisy (numpy.ndarray): ODE solution at 'tTrain' with optional noise.
 
         Raises:
-        - ValueError: If 'tend' is less than or equal to zero, 'numpoints' is less than or equal to one, 
-                    or 'time_limit' is not a list/tuple of two increasing values greater than zero.
+        - ValueError: For invalid 'tend', 'numpoints', or 'time_limit' values.
         """
          # check conditions
         if numpoints <=1:
@@ -101,10 +94,18 @@ class BaseModel(ABC):
             for i in range(sol_noisy.shape[1]):
                 plt.scatter(tTrain, sol_noisy[:,i], label=f'Cell Population {i+1}')
                 plt.legend()
-            plt.title('Training Points')
+            title = f'Training Points - Noise Level: {noise_level}'
+            if time_limit:
+                title += f', Time Window: [{time_limit[0]}, {time_limit[1]}]'
+            plt.title(title)
             plt.xlabel('t')
             plt.ylabel('Population')
-            plt.show()
+            if save_path:
+                if os.path.basename(save_path) == '':
+                    raise ValueError("Please provide a file name with the save path.")
+                plt.savefig(save_path)
+            else:
+                plt.show()
         return tTrain, sol_noisy
 
 
@@ -145,9 +146,10 @@ class CompetitionModel(BaseModel):
 
     def _model(self, q, t):
         u, v = q
-        r, a1, a2, b1,b2, e0, f0, e1, f1, e2, f2, e3, f3, e4,f4 = self.params
-        dudt = u*(1-a1*u- a2*v)  +e0 + e1*u + e2*v + e3*u*u*v + e4*u*v*v
-        dvdt = r*v*(1-b1*u-b2*v) +f0 + f1*u + f2*v + f3*u*u*v + f4*u*v*v
+        # r, a1, a2, b1,b2, e0, f0, e1, f1, e2, f2, e3, f3, e4,f4 = self.params
+        r, a1, a2, b1,b2 = self.params
+        dudt = u*(1-a1*u- a2*v)  # +e0 + e1*u + e2*v + e3*u*u*v + e4*u*v*v
+        dvdt = r*v*(1-b1*u-b2*v) # +f0 + f1*u + f2*v + f3*u*u*v + f4*u*v*v
         return [dudt, dvdt]
     
     def plot_solution(self, ax=None, set_title=None):
@@ -173,28 +175,47 @@ class CompetitionModel(BaseModel):
         if created_fig:
             return fig
 
-def model_comparison(true_model, predicted_model):
-    t_span = np.arange(0, true_model.tend, 0.01)
+def model_comparison(true_model, predicted_model, nn_model, t_span=None, ax=None, title=None):
+    """
+        Compare two model (SG Model/Comp Model) along with the NN model output. 
+    """
+    if t_span is None:
+        t_span = np.arange(0, true_model.tend, 0.01)
     _, true_sol = true_model.solve_ode(true_model.initial_conditions, t_span)
     _, predicted_sol = predicted_model.solve_ode(predicted_model.initial_conditions, t_span)
-
-    fig, ax = plt.subplots()
+    if ax is None:
+        fig, ax = plt.subplots()
     
     # Check if the solution includes both u and v
     if true_sol.shape[1] == 2:
         # Plot u and v for both true and predicted solutions
-        ax.plot(t_span, true_sol[:, 0], label='True u', linestyle='-', color='blue', linewidth=2)
-        ax.plot(t_span, true_sol[:, 1], label='True v', linestyle='-', color='green', linewidth=2)
-        ax.plot(t_span, predicted_sol[:, 0], label='Predicted u', linestyle='--', color='blue',linewidth=2)
-        ax.plot(t_span, predicted_sol[:, 1], label='Predicted v', linestyle='--', color='green', linewidth=2)
+        nn_u_sol = nn_model[:,1]
+        nn_v_sol = nn_model[:,2]
+        ax.plot(t_span, true_sol[:, 0], label='True u', linestyle='-', color='blue', linewidth=1.5)
+        ax.plot(t_span, true_sol[:, 1], label='True v', linestyle='-', color='green', linewidth=1.5)
+        ax.plot(t_span, predicted_sol[:, 0], label='Predicted u', linestyle='--', color='blue',linewidth=1.5)
+        ax.plot(t_span, predicted_sol[:, 1], label='Predicted v', linestyle='--', color='green', linewidth=1.5)
+        ax.plot(t_span, nn_u_sol, label="NN u", linestyle='dashdot', color='blue', linewidth=1.5)
+        ax.plot(t_span, nn_v_sol, label="NN v", linestyle='dashdot', color='green', linewidth=1.5)
     else:
         # Plot only u for both true and predicted solutions
-        ax.plot(t_span, true_sol[:, 0], label='True Solution', linestyle='-', linewidth=2)
-        ax.plot(t_span, predicted_sol[:, 0], label='Predicted Solution', linestyle='--', linewidth=2)
-
-    ax.set_title('Model Comparison')
+        nn_sol = nn_model[:,1]
+        ax.plot(t_span, true_sol[:, 0], label='True Solution', linestyle='-', linewidth=1.5)
+        ax.plot(t_span, predicted_sol[:, 0], label='Predicted Solution', linestyle='--', linewidth=1.5)
+        ax.plot(t_span, nn_sol, label="NN Solution", linestyle='dashdot', linewidth=1.5)
+    if title is not None:
+        ax.set_title(title)
+    else:
+        ax.set_title('Model Comparison')
     ax.set_xlabel('Time')
     ax.set_ylabel('Population')
-    ax.legend()
+    ax.legend(fontsize='small')
 
-    return fig
+
+def cust_semilogx(AX, X, Y, xlabel, ylabel, label):
+    if X is None:
+        im = AX.semilogy(Y, label=label)
+    else:
+        im = AX.semilogy(X, Y, label=label)
+    if xlabel is not None: AX.set_xlabel(xlabel)
+    if ylabel is not None: AX.set_ylabel(ylabel)
