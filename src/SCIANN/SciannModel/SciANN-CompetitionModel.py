@@ -36,7 +36,7 @@ parser.add_argument('--model_type', help='Survival or co-existence model (defaul
 # arguments for training data generator
 parser.add_argument('--sparse', help='Sparsity of training data (default True)', type=bool, nargs=1, default=[True])
 parser.add_argument('-tl', '--time_limit', help='Time window for the training data (default [10, 30])', type=int, nargs=2, default=[10, 30])
-parser.add_argument('-nl', '--noise_level', help='Level of noise in training data (default 0.05)', type=float, default=0.005)
+parser.add_argument('-nl', '--noise_level', help='Level of noise in training data (default 0.005)', type=float, default=0.005)
 parser.add_argument('-sf', '--show_figure', help='Show training data (default True)', type=bool, nargs=1, default=[True])
 
 parser.add_argument('--shuffle', help='Shuffle data for training (default True)', type=bool, nargs=1, default=[True])
@@ -89,6 +89,38 @@ fname = (
 )
 
 #TODO
+# Energy plots
+def plot_energy(phi_values, u, v, ax=None, set_title=None):
+    if ax is None:
+        plt.figure(figsize=(4, 3))
+        ax = plt.gca()
+    
+    contour = ax.contourf(u, v, phi_values, levels=50, cmap='jet')
+    plt.colorbar(contour, ax=ax)
+    
+    if set_title is None:
+        ax.set_title("Energy Landscape (Lyapunov Function)")
+    else:
+        ax.set_title(set_title)
+    
+    ax.set_xlabel("$x_1$ (Virus)")
+    ax.set_ylabel("$x_2$ (Immune Cells)")
+
+    if ax is None:
+        plt.show()
+
+# Calculate Lyapunov Function
+"""
+    I choose, A11 = b1*b2/u , A22 = a1*a2/v, A12 = 0, A21 = 0
+
+"""
+def phi_comp(u, v, params):
+     r, a1, a2, b1, b2 = params
+     #TODO Check later (sign)
+     return (- b1 * b2 * u + 0.5 * b1 * b2 * a1 * u**2 + b1 * b2 * a2 * v * u -
+            a1 * a2 * r * v + a1 * a2 * r * b1 * u * v + 0.5 * a1 * a2 * r * b2 * v**2)
+
+
 network_description = (
      f"Layers: {'x'.join(map(str, args.layers))}\n"
      f"Activation Function: {args.actf[0]}\n"
@@ -310,6 +342,41 @@ def plot():
     ax[1].text(0.5, 0.5, network_description, ha='center', va='center', fontsize='small')
     plt.subplots_adjust(wspace=0.1)
     plt.savefig("{}_Sol.png".format(output_file_name))
+
+    # Energy plot
+    fig = plt.figure(figsize=(12, 6), dpi=300)
+    gs = gridspec.GridSpec(2, 2, height_ratios=[3, 1]) 
+
+    ax1 = fig.add_subplot(gs[0, 0])  
+    ax2 = fig.add_subplot(gs[0, 1]) 
+
+    # Generate and plot energy landscapes
+    u_range = np.linspace(0, 2, 500)
+    v_range = np.linspace(0, 2, 500)
+    u, v = np.meshgrid(u_range, v_range)
+
+    phi_comp_values_learned = phi_comp(u, v, param_learned)
+    plot_energy(phi_values=phi_comp_values_learned, u=u, v=v, ax=ax1, set_title=args.model_type[0]+" Learned")
+
+    phi_comp_value_true = phi_comp(u, v, param_true)
+    plot_energy(phi_values=phi_comp_value_true, u=u, v=v, ax=ax2, set_title=args.model_type[0]+" True")
+
+    param_learned_formatted = ['{:.2f}'.format(param) for param in param_learned]
+
+    # table
+    columns = ['r', 'a1', 'a2', 'b1', 'b2']
+    rows = ['Learned Params', 'True Params']
+    cell_text = [param_learned_formatted, param_true]
+
+    ax3 = fig.add_subplot(gs[1, :])
+    ax3.axis('tight')
+    ax3.axis('off')
+    table = ax3.table(cellText=cell_text, rowLabels=rows, colLabels=columns, loc='center')
+    table.auto_set_font_size(False)
+    table.set_fontsize(10)
+    table.scale(1, 1.2)
+
+    plt.savefig("{}_Energy.png".format(output_file_name))
 
 if __name__=="__main__":
     if args.plot==False:
