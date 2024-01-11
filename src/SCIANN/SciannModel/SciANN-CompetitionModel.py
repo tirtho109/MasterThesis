@@ -103,22 +103,28 @@ def plot_energy(phi_values, u, v, ax=None, set_title=None):
     else:
         ax.set_title(set_title)
     
-    ax.set_xlabel("$x_1$ (Virus)")
-    ax.set_ylabel("$x_2$ (Immune Cells)")
+    ax.set_xlabel("$u$ (Immune Cells)")
+    ax.set_ylabel("$v$ (Virus)")
 
     if ax is None:
         plt.show()
 
 # Calculate Lyapunov Function
 """
-    I choose, A11 = b1*b2/u , A22 = a1*a2/v, A12 = 0, A21 = 0
+    Choosen:
+    dphi/du = -b1*b2*a1*r*(1-a1*u-a2*v)
+    dphi/dv = -a1*a2*b2*r*(1-b1*u-b2*v)
+
+    phi_dot = -b1*b2*a1*r*u(1-a1*u-a2*v)**2 - a1*a2*b2*r**2*v*(1-b1u-b2v)**2 <= 0
+    phi = (-a1*b2*r*(b1*u+a2*v) + a1*a2*b1*b2*r*u*v + 0.5*r*a1*b2*(a1*b1*u*u + a2*b2*v*v))
 
 """
 def phi_comp(u, v, params):
      r, a1, a2, b1, b2 = params
      #TODO Check later (sign)
-     return (- b1 * b2 * u + 0.5 * b1 * b2 * a1 * u**2 + b1 * b2 * a2 * v * u -
-            a1 * a2 * r * v + a1 * a2 * r * b1 * u * v + 0.5 * a1 * a2 * r * b2 * v**2)
+    #  return (- b1 * b2 * u + 0.5 * b1 * b2 * a1 * u**2 + b1 * b2 * a2 * v * u -
+    #         a1 * a2 * r * v + a1 * a2 * r * b1 * u * v + 0.5 * a1 * a2 * r * b2 * v**2)
+     return (-a1*b2*r*(b1*u+a2*v) + a1*a2*b1*b2*r*u*v + 0.5*r*a1*b2*(a1*b1*u*u + a2*b2*v*v))
 
 
 network_description = (
@@ -351,9 +357,14 @@ def plot():
     ax2 = fig.add_subplot(gs[0, 1]) 
 
     # Generate and plot energy landscapes
-    u_range = np.linspace(0, 2, 500)
-    v_range = np.linspace(0, 2, 500)
-    u, v = np.meshgrid(u_range, v_range)
+    if args.model_type[0]=="survival":
+        u_range = np.linspace(-.5, 5, 500)
+        v_range = np.linspace(0, 5, 500)
+        u, v = np.meshgrid(u_range, v_range)
+    else:
+        u_range = np.linspace(-.5, 2.5, 500)
+        v_range = np.linspace(0, 3, 500)
+        u, v = np.meshgrid(u_range, v_range)
 
     phi_comp_values_learned = phi_comp(u, v, param_learned)
     plot_energy(phi_values=phi_comp_values_learned, u=u, v=v, ax=ax1, set_title=args.model_type[0]+" Learned")
