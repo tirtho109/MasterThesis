@@ -126,6 +126,41 @@ def phi_comp(u, v, params):
     #         a1 * a2 * r * v + a1 * a2 * r * b1 * u * v + 0.5 * a1 * a2 * r * b2 * v**2)
      return (-a1*b2*r*(b1*u+a2*v) + a1*a2*b1*b2*r*u*v + 0.5*r*a1*b2*(a1*b1*u*u + a2*b2*v*v))
 
+#TODO 
+# Phase Plot
+def phase_plot(model, ax=None, title=None):
+    t = np.linspace(0, model.tend, 500)
+    if ax is None:
+        fig, ax = plt.subplots()
+    Y, X = np.mgrid[0:5:15j, 0:5:15j]
+    U, V = model._model([X, Y], t)
+    speed = np.sqrt((U**2 + V**2))
+    UN = np.nan_to_num(U / speed)
+    VN = np.nan_to_num(V / speed)
+
+    Q = ax.quiver(X,Y, UN, VN, color='r', scale=50) # scale = 50
+
+    # Nullclines
+    r, a1, a2, b1, b2 = model.params
+    v_range = np.linspace(0, 4.0, 200)
+    u_range = v_range
+    u_nullcline = (1 - a2 * v_range) / a1
+    v_nullcline = (1 - b1 * u_range) / b2 
+    ax.plot(u_nullcline, v_range, 'b--', label=r'$1 - a_1 \cdot u - a_2 \cdot v$')  # u Nullcline
+    ax.plot(u_range, v_nullcline, 'r--', label=r'$1 - b_1 \cdot u - b_2 \cdot v$')  # v Nullcline
+
+    ax.set_xlim(0, 4)
+    ax.set_ylim(0, 4)
+    ax.set_xlabel('U')
+    ax.set_ylabel('V')
+    ax.legend()
+    if title is not None:
+         ax.set_title(title)
+    else:
+         ax.set_title("Phase plot")
+    ax.grid(True)
+    if ax is None:
+         plt.show()
 
 network_description = (
      f"Layers: {'x'.join(map(str, args.layers))}\n"
@@ -356,7 +391,6 @@ def plot():
     ax1 = fig.add_subplot(gs[0, 0])  
     ax2 = fig.add_subplot(gs[0, 1]) 
 
-    # Generate and plot energy landscapes
     if args.model_type[0]=="survival":
         u_range = np.linspace(-.5, 5, 500)
         v_range = np.linspace(0, 5, 500)
@@ -387,7 +421,28 @@ def plot():
     table.set_fontsize(10)
     table.scale(1, 1.2)
 
+    fig.suptitle("Energy Plot")
     plt.savefig("{}_Energy.png".format(output_file_name))
+
+    # Trajectories Plot
+    fig = plt.figure(figsize=(12, 6), dpi=300)
+    gs = gridspec.GridSpec(2, 2, height_ratios=[3, 1]) 
+
+    ax1 = fig.add_subplot(gs[0, 0])  
+    ax2 = fig.add_subplot(gs[0, 1]) 
+    phase_plot(learned_comp_model, ax=ax1, title="Learned")
+    phase_plot(true_comp_model, ax=ax2, title="True")
+
+    ax3 = fig.add_subplot(gs[1, :])
+    ax3.axis('tight')
+    ax3.axis('off')
+    table = ax3.table(cellText=cell_text, rowLabels=rows, colLabels=columns, loc='center')
+    table.auto_set_font_size(False)
+    table.set_fontsize(10)
+    table.scale(1, 1.2)
+
+    fig.suptitle("Phase Plot")
+    plt.savefig("{}_Trajectories.png".format(output_file_name))
 
 if __name__=="__main__":
     if args.plot==False:
