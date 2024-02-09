@@ -176,6 +176,9 @@ network_description = (
      f"Model Type: {args.model_type[0]}"
 )
 
+def mse(predictions, targets):
+    return ((predictions - targets) ** 2).mean()
+
 def train_comp_model():
 
     # NN Setup
@@ -373,6 +376,16 @@ def plot():
     param_learned = np.loadtxt(fname+"_learned_params")
     true_comp_model = CompetitionModel(param_true, args.initial_conditions, args.tend)
     learned_comp_model= CompetitionModel(param_learned, args.initial_conditions, args.tend)
+
+    # calculate mse and save it
+    t_span = np.linspace(0, args.tend, 1000)
+
+    _, true_solution = true_comp_model.solve_ode(args.initial_conditions, t_span)
+    _, learned_solution = learned_comp_model.solve_ode(args.initial_conditions, t_span)
+
+    aggregate_mse = mse(learned_solution, true_solution)
+    
+    np.savetxt(fname+"_mse", np.array([aggregate_mse]), delimiter=', ')
 
     fig, ax = plt.subplots(1, 2, figsize=(7, 4), dpi=300)
     tspan = np.linspace(0, args.tend, args.numx[0])
