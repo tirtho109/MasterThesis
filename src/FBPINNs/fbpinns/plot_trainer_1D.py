@@ -19,12 +19,10 @@ def _lim(v, factor=1.1):
         mi2, ma2 = v[:,1].min(0), v[:,1].max(0)
         mi = min(mi1, mi2)
         ma = max(ma1, ma2)
-        print(mi1, mi2, mi, ma1, ma2, ma)
     else:
         mi, ma = v.min(0), v.max(0)
     c = (mi+ma)/2
     w = factor*(ma-mi)/2
-    print(c, w)
     return (c-w, c+w)
 
 def _plot_setup(x_batch_test, u_exact):
@@ -62,10 +60,21 @@ def plot_1D_FBPINN(x_batch_test, u_exact, u_test, us_test, ws_test, us_raw_test,
     # plot full + individual solutions
     plt.subplot(4,1,3)
     plt.title(f"[{i}] Full and individual solutions")
-    for im in range(all_params["static"]["decomposition"]["m"]):
-        plt.plot(x_batch_test[:,0], us_test[im,:,0], color=colors[im])
-    plt.plot(x_batch_test[:,0], u_exact[:,0], lw=4, color="tab:grey", label="Ground truth")
-    plt.plot(x_batch_test[:,0], u_test[:,0], color="k", label="FBPINN")
+
+    if u_exact.shape[1] == 2:
+        for im in range(all_params["static"]["decomposition"]["m"]):
+            plt.plot(x_batch_test[:,0], us_test[im,:,0], color=colors[im])
+            plt.plot(x_batch_test[:,0], us_test[im,:,1], color=colors[im])
+        plt.plot(x_batch_test[:,0], u_exact[:,0], lw=4, color="tab:grey", label="Ground truth: u")
+        plt.plot(x_batch_test[:,0], u_exact[:,1], lw=4, color="tab:blue", label="Ground truth: v")
+        plt.plot(x_batch_test[:,0], u_test[:,0], color="k", label="FBPINN: u")
+        plt.plot(x_batch_test[:,0], u_test[:,1], color="r", label="FBPINN: v")
+    else:
+        for im in range(all_params["static"]["decomposition"]["m"]):
+            plt.plot(x_batch_test[:,0], us_test[im,:,0], color=colors[im])
+        plt.plot(x_batch_test[:,0], u_exact[:,0], lw=4, color="tab:grey", label="Ground truth")
+        plt.plot(x_batch_test[:,0], u_test[:,0], color="k", label="FBPINN")
+
     plt.legend()
     plt.xlim(*xlim)
     plt.ylim(*ulim)
@@ -73,8 +82,13 @@ def plot_1D_FBPINN(x_batch_test, u_exact, u_test, us_test, ws_test, us_raw_test,
     # plot raw solutions
     plt.subplot(4,1,4)
     plt.title(f"[{i}] Raw solutions")
-    for im in range(all_params["static"]["decomposition"]["m"]):
-        plt.plot(x_batch_test[:,0], us_raw_test[im,:,0], color=colors[im])
+    if u_exact.shape[1] == 2:
+        for im in range(all_params["static"]["decomposition"]["m"]):
+            plt.plot(x_batch_test[:,0], us_raw_test[im,:,0], color=colors[im])
+            plt.plot(x_batch_test[:,0], us_raw_test[im,:,1], color=colors[im])
+    else:
+        for im in range(all_params["static"]["decomposition"]["m"]):
+            plt.plot(x_batch_test[:,0], us_raw_test[im,:,0], color=colors[im])
     plt.xlim(*xlim)
 
     plt.tight_layout()
@@ -97,8 +111,14 @@ def plot_1D_PINN(x_batch_test, u_exact, u_test, u_raw_test, x_batch, all_params,
     # plot full solution
     plt.subplot(3,1,2)
     plt.title(f"[{i}] Full solution")
-    plt.plot(x_batch_test[:,0], u_exact[:,0], lw=4, color="tab:grey", label="Ground truth")
-    plt.plot(x_batch_test[:,0], u_test[:,0], color="k", label="PINN")
+    if u_exact.shape[1] == 2:
+        plt.plot(x_batch_test[:,0], u_exact[:,0], lw=4, color="tab:grey", label="Ground truth: u")
+        plt.plot(x_batch_test[:,0], u_test[:,0], color="k", label="PINN: u")
+        plt.plot(x_batch_test[:,0], u_exact[:,1], lw=4, color="tab:blue", label="Ground truth: v")
+        plt.plot(x_batch_test[:,0], u_test[:,1], color="r", label="PINN: v")
+    else:
+        plt.plot(x_batch_test[:,0], u_exact[:,0], lw=4, color="tab:grey", label="Ground truth")
+        plt.plot(x_batch_test[:,0], u_test[:,0], color="k", label="PINN")
     plt.legend()
     plt.xlim(*xlim)
     plt.ylim(*ulim)
@@ -106,7 +126,11 @@ def plot_1D_PINN(x_batch_test, u_exact, u_test, u_raw_test, x_batch, all_params,
     # plot raw solution
     plt.subplot(3,1,3)
     plt.title(f"[{i}] Raw solution")
-    plt.plot(x_batch_test[:,0], u_raw_test[:,0], color="k")
+    if u_exact.shape[1] == 2:
+        plt.plot(x_batch_test[:,0], u_raw_test[:,0], color="k")
+        plt.plot(x_batch_test[:,0], u_raw_test[:,1], color="r")
+    else:
+        plt.plot(x_batch_test[:,0], u_raw_test[:,0], color="k")
     plt.xlim(*xlim)
 
     plt.tight_layout()
