@@ -12,9 +12,19 @@ import matplotlib.pyplot as plt
 from fbpinns.util.other import colors
 
 def _lim(v, factor=1.1):
-    mi, ma = v.min(0), v.max(0)
+    mi = None
+    ma = None
+    if v.shape[1] == 2:
+        mi1, ma1 = v[:,0].min(0), v[:,0].max(0)
+        mi2, ma2 = v[:,1].min(0), v[:,1].max(0)
+        mi = min(mi1, mi2)
+        ma = max(ma1, ma2)
+        print(mi1, mi2, mi, ma1, ma2, ma)
+    else:
+        mi, ma = v.min(0), v.max(0)
     c = (mi+ma)/2
     w = factor*(ma-mi)/2
+    print(c, w)
     return (c-w, c+w)
 
 def _plot_setup(x_batch_test, u_exact):
