@@ -152,6 +152,19 @@ def train_comp_model():
     file_path = os.path.join(c.summary_out_dir, "metrices.csv")
     export_mse_mae(u_exact, u_test, u_learned, file_path)
 
+    # plots
+    # 2. N-l1 test loss vs training steps
+    fig, ax = plt.subplots(figsize=(8, 8), dpi=300)
+    i,t,l1n = model[-1][:,0], model[-1][:,3], model[-1][:,-1]
+    ax.plot(i, l1n, label=f"FBPINN {h} l {p} hu {args.num_subdomain} ns")
+    ax.set_yscale('log')
+    ax.set_xlabel('Training Steps')
+    ax.set_ylabel('Normalized l1 test loss')
+    ax.set_title('Loss vs Training Steps')
+    ax.legend()
+    file_path = os.path.join(c.summary_out_dir, "normalized_loss.png")
+    plt.savefig(file_path)
+
     if args.pinn_trainer[0]:
         # PINN trainer
         h = len(args.pinns_layers) - 2  # Number of hidden layers
@@ -176,6 +189,19 @@ def train_comp_model():
         u_exact, u_test, u_learned = get_us(c_out, model, type="PINN")
         file_path = os.path.join(c.summary_out_dir, "metrices.csv")
         export_mse_mae(u_exact, u_test, u_learned, file_path)
+
+        # plots
+        # 2. N-l1 test loss vs training steps
+        fig, ax = plt.subplots(figsize=(8, 8), dpi=300)
+        i,t,l1n = model[-1][:,0], model[-1][:,3], model[-1][:,-1]
+        ax.plot(i, l1n, label=f"PINN {h} l {p} hu")
+        ax.set_yscale('log')
+        ax.set_xlabel('Training Steps')
+        ax.set_ylabel('Normalized l1 test loss')
+        ax.set_title('Loss vs Training Steps')
+        ax.legend()
+        file_path = os.path.join(c.summary_out_dir, "normalized_loss.png")
+        plt.savefig(file_path)
 
 
 if __name__=="__main__":
