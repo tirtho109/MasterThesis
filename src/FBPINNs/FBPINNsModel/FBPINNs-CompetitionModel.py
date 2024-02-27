@@ -18,7 +18,8 @@ from fbpinns.constants import Constants, get_subdomain_ws
 from fbpinns.trainers import FBPINNTrainer, PINNTrainer
 from fbpinns.analysis import load_model, FBPINN_solution, PINN_solution
 import matplotlib.pyplot as plt
-from plot import plot_model_comparison
+from plot import plot_model_comparison, get_us, export_mse_mae
+import pandas as pd
 
 # Input interface for python. 
 parser = argparse.ArgumentParser(description='''
@@ -136,12 +137,20 @@ def train_comp_model():
     FBPINNrun = FBPINNTrainer(c)
     FBPINNrun.train()
 
+    # import model
+    c_out, model = load_model(run, rootdir=args.rootdir+"/")
+
     # plots
     # 1. model comparisoin
     fig, ax = plt.subplots(figsize=(8, 8), dpi=300)
-    plot_model_comparison(run, rootdir=args.rootdir+"/", type="FBPINN", ax=ax)
+    plot_model_comparison(c_out, model, type="FBPINN", ax=ax)
     file_path = os.path.join(c.summary_out_dir, "model_comparison.png")
     plt.savefig(file_path)
+
+    # Mse & Mae
+    u_exact, u_test, u_learned = get_us(c_out, model, type="FBPINN")
+    file_path = os.path.join(c.summary_out_dir, "metrices.csv")
+    export_mse_mae(u_exact, u_test, u_learned, file_path)
 
     if args.pinn_trainer[0]:
         # PINN trainer
@@ -154,11 +163,19 @@ def train_comp_model():
         PINNrun = PINNTrainer(c)
         PINNrun.train()
 
+        # import model
+        c_out, model = load_model(run, rootdir=args.rootdir+"/")
+
         # plot1: Model Comparison
         fig, ax = plt.subplots(figsize=(8, 8), dpi=300)
-        plot_model_comparison(run, rootdir=args.rootdir+"/", type="PINN", ax=ax)
+        plot_model_comparison(c_out, model, type="PINN", ax=ax)
         file_path = os.path.join(c.summary_out_dir, "model_comparison.png")
         plt.savefig(file_path)
+        
+        # Mse & Mae
+        u_exact, u_test, u_learned = get_us(c_out, model, type="PINN")
+        file_path = os.path.join(c.summary_out_dir, "metrices.csv")
+        export_mse_mae(u_exact, u_test, u_learned, file_path)
 
 
 if __name__=="__main__":
