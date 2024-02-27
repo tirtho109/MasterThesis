@@ -102,7 +102,7 @@ def train_sg_model():
     p = sum(args.layers[1:-1])  # Sum of neurons in hidden layers
     n = (args.num_collocation,) # number of training point(collocation)
     run = f"FBPINN_{tag}_{problem.__name__}_{network.__name__}_{args.num_subdomain}-ns_{args.window_overlap}-overlap_{h}-layers_{p}-hidden_{n[0]}-nCol_"
-    run += f"e-{args.epochs}_nData-{args.numx}_timeLimit-{args.time_limit}_nTest-{args.num_test}_"
+    run += f"{args.epochs}-e_{args.numx}-nData_{args.time_limit}-timeLimit_{args.num_test}-nTest_"
 
     c = ModifiedConstants(
         run=run,
@@ -138,7 +138,7 @@ def train_sg_model():
         h = len(args.pinns_layers) - 2  # Number of hidden layers
         p = sum(args.pinns_layers[1:-1])  # Sum of neurons in hidden layers
         run = f"PINN_{tag}_{problem.__name__}_{network.__name__}_{h}-layers_{p}-hidden_{n[0]}-nCol_"
-        run += f"e-{args.epochs}_nData-{args.numx}_timeLimit-{args.time_limit}_nTest-{args.num_test}_"
+        run += f"{args.epochs}-e_{args.numx}-nData_{args.time_limit}-timeLimit_{args.num_test}-nTest_"
         c["network_init_kwargs"] = dict(layer_sizes=args.pinns_layers)# use a larger neural network
         c["run"] = run
         PINNrun = PINNTrainer(c)
