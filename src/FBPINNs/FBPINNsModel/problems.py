@@ -44,7 +44,7 @@ class SaturatedGrowthModel(Problem):
         u0 = all_params["static"]["problem"]["u_0"]
         C = all_params["static"]["problem"]["C_ture"]
 
-        exp = jnp.exp(-C*x_batch)
+        exp = jnp.exp(-C*x_batch[:,0:1])
         u = C / (1 + ((C - u0) / u0) * exp)
         return u
     
@@ -92,6 +92,23 @@ class SaturatedGrowthModel(Problem):
         data = 1e6*jnp.mean((u-uc)**2)
 
         return phys + data
+    
+    @staticmethod
+    def model(u, t, C):
+        """Defines the ODE to be solved: du/dt = u * (C - u)."""
+        return u * (C - u)
+    
+    @staticmethod
+    def learned_solution(all_params, x_batch):
+        """Solves the ODE for given initial conditions and  learned parameters."""
+        # Extracting parameters and initial condition
+        C = all_params['trainable']["problem"]["C"]
+        u0 = all_params["static"]["problem"]["u_0"]
+        
+        # Solving the ODE
+        solution = odeint(SaturatedGrowthModel.model, u0, x_batch, args=(C,))
+        
+        return solution
     
 
 class CompetitionModel(Problem):
@@ -228,4 +245,16 @@ class CompetitionModel(Problem):
             combined_solution = combined_solution.reshape(batch_shape + (2,))
         
         return combined_solution
+    
+    @staticmethod
+    def learned_solution(all_params, x_batch):
+        # r_true, a1_true, a2_true, b1_true, b2_true = [all_params['static']["problem"][key] for key in ('r_true', 'a1_true', 'a2_true', 'b1_true', 'b2_true')]
+        r, a1, a2, b1, b2 = [all_params['trainable']["problem"][key] for key in ('r', 'a1', 'a2', 'b1', 'b2')]
+        u0 = all_params["static"]["problem"]["u0"]
+        v0 = all_params["static"]["problem"]["v0"]
+        params = [r, a1, a2, b1, b2]
+
+        solution = odeint(CompetitionModel.model, [u0, v0], x_batch, args=(params,))
+
+        return solution
     
