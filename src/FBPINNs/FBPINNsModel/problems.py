@@ -28,7 +28,7 @@ class SaturatedGrowthModel(Problem):
         
         static_params = {
             "dims":(1,1),
-            "C_ture":C,
+            "C_true":C,
             "u_0":u0,
             "sd":sd,
             "time_limit":time_limit,
@@ -45,7 +45,7 @@ class SaturatedGrowthModel(Problem):
     @staticmethod 
     def exact_solution(all_params, x_batch, batch_shape=None):
         u0 = all_params["static"]["problem"]["u_0"]
-        C = all_params["static"]["problem"]["C_ture"]
+        C = all_params["static"]["problem"]["C_true"]
 
         exp = jnp.exp(-C*x_batch[:,0:1])
         u = C / (1 + ((C - u0) / u0) * exp)
