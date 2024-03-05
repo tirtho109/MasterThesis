@@ -22,7 +22,9 @@ class SaturatedGrowthModel(Problem):
     """
 
     @staticmethod
-    def init_params(C=1, u0=0.01, sd=0.1, time_limit=[0, 24], numx=50):
+    def init_params(C=1, u0=0.01, sd=0.1, 
+                    time_limit=[0, 24], numx=50,
+                    lambda_phy=1e0, lambda_data=1e6):
         
         static_params = {
             "dims":(1,1),
@@ -31,7 +33,8 @@ class SaturatedGrowthModel(Problem):
             "sd":sd,
             "time_limit":time_limit,
             "numx":numx,
-
+            "lambda_phy": lambda_phy,
+            "lambda_data": lambda_data,
         }
         trainable_params = {
             "C":jnp.array(0.), # learn C from constraints
@@ -83,13 +86,15 @@ class SaturatedGrowthModel(Problem):
     def loss_fn(all_params, constraints):
 
         C = all_params["trainable"]["problem"]["C"]
+        lambda_phy = all_params["static"]["problem"]["lambda_phy"]
+        lambda_data = all_params["static"]["problem"]["lambda_data"]
         # physics loss
         _, u, ut = constraints[0]
-        phys = jnp.mean((ut - u*(C-u))**2)
+        phys = lambda_phy*jnp.mean((ut - u*(C-u))**2)
 
         # data loss
         _, uc, u = constraints[1]
-        data = 1e6*jnp.mean((u-uc)**2)
+        data = lambda_data*jnp.mean((u-uc)**2)
 
         return phys + data
     
@@ -103,18 +108,19 @@ class SaturatedGrowthModel(Problem):
         """Solves the ODE for given initial conditions and  learned parameters."""
         # Extracting parameters and initial condition
         C = all_params['trainable']["problem"]["C"]
-        u0 = all_params["static"]["problem"]["u_0"]
-        
-        # Solving the ODE
-        solution = odeint(SaturatedGrowthModel.model, u0, x_batch, args=(C,))
-        
-        return solution
+        u0 = all_params["static"]["problem"]["u_0"]  
+              
+        exp = jnp.exp(-C*x_batch)
+        u = C / (1 + ((C - u0) / u0) * exp) # solution for C_learned
+        return u.reshape(-1,1)
     
 
 class CompetitionModel(Problem):
 
     @staticmethod
-    def init_params(params=[0.5, 0.7, 0.3, 0.3, 0.6], u0=2, v0=1, sd=0.1, time_limit=[0,24], numx=50):
+    def init_params(params=[0.5, 0.7, 0.3, 0.3, 0.6], 
+                    u0=2, v0=1, sd=0.1, time_limit=[0,24], 
+                    numx=50, lambda_phy=1e0, lambda_data=1e6):
         
         r, a1, a2, b1, b2 = params 
         static_params = {
@@ -129,6 +135,8 @@ class CompetitionModel(Problem):
             "sd":sd,
             "time_limit":time_limit,
             "numx":numx,
+            "lambda_phy": lambda_phy,
+            "lambda_data": lambda_data,
         }
         trainable_params = {
             "r":jnp.array(0.),
@@ -156,9 +164,7 @@ class CompetitionModel(Problem):
         time_limit = all_params["static"]["problem"]["time_limit"]
         numx = all_params["static"]["problem"]["numx"]
         x_batch_data = jnp.linspace(time_limit[0], time_limit[1],numx).astype(float).reshape((-1,1))
-        r_true, a1_true, a2_true, b1_true, b2_true = [all_params['static']["problem"][key] for key in ('r_true', 'a1_true', 'a2_true', 'b1_true', 'b2_true')]
-        params = (r_true, a1_true, a2_true, b1_true, b2_true)
-        solution = odeint(CompetitionModel.model, [u0,v0], x_batch_data.reshape((-1,)), args=(params,))
+        solution = CompetitionModel.exact_solution(all_params, x_batch_data)
         u_data = solution[:,0]
         v_data = solution[:,1]
         required_ujs_data = (
@@ -186,18 +192,19 @@ class CompetitionModel(Problem):
     def loss_fn(all_params, constraints):
         
         r, a1, a2, b1, b2 = [all_params['trainable']["problem"][key] for key in ('r', 'a1', 'a2', 'b1', 'b2')]
-
+        lambda_phy = all_params["static"]["problem"]["lambda_phy"]
+        lambda_data = all_params["static"]["problem"]["lambda_data"]
         # Physics loss
         _, u, v, ut, vt = constraints[0]
         phys1 = jnp.mean((ut - u + a1*u**2 + a2*u*v)**2)
         phys2 = jnp.mean((vt - r*v + r*b1*u*v + r*b2*v**2)**2)
-        phys = phys1 + phys2
+        phys = lambda_phy*(phys1 + phys2)
 
         # Data Loss
         _, ud, vd, u, v = constraints[1]
         u = u.reshape(-1) 
         v = v.reshape(-1) 
-        data = 1e6*jnp.mean((u-ud)**2) + 1e6*jnp.mean((v-vd)**2)
+        data = lambda_data*(jnp.mean((u-ud)**2) + 1e6*jnp.mean((v-vd)**2))
         
         return phys + data
     
@@ -248,7 +255,6 @@ class CompetitionModel(Problem):
     
     @staticmethod
     def learned_solution(all_params, x_batch):
-        # r_true, a1_true, a2_true, b1_true, b2_true = [all_params['static']["problem"][key] for key in ('r_true', 'a1_true', 'a2_true', 'b1_true', 'b2_true')]
         r, a1, a2, b1, b2 = [all_params['trainable']["problem"][key] for key in ('r', 'a1', 'a2', 'b1', 'b2')]
         u0 = all_params["static"]["problem"]["u0"]
         v0 = all_params["static"]["problem"]["v0"]
