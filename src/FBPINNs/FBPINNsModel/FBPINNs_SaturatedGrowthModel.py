@@ -18,7 +18,7 @@ from fbpinns.constants import Constants, get_subdomain_ws
 from fbpinns.trainers import FBPINNTrainer, PINNTrainer
 from fbpinns.analysis import load_model, FBPINN_solution, PINN_solution
 import matplotlib.pyplot as plt
-from plot import plot_model_comparison, get_us, export_mse_mae
+from plot import plot_model_comparison, get_us, export_mse_mae, export_parameters
 import pandas as pd
 from subdomain_helper import get_subdomain_xsws
 
@@ -46,7 +46,7 @@ def get_parser():
     parser.add_argument('-lp','--lambda_phy', help='Weight for physics loss (default 1e0)', type=float, default=1e0)
     parser.add_argument('-ld','--lambda_data', help='Weight for data loss (default 1e6)', type=float, default=1e6)
 
-    parser.add_argument('-nc','--num_collocation', help='Number of collocation points (default 2000)', type=int, default=2000)
+    parser.add_argument('-nc','--num_collocation', help='Number of collocation points (default 2000)', type=int, default=200)
     parser.add_argument('-nt','--num_test', help='Number of test points (default 200)', type=int, default=200)
     parser.add_argument('-e','--epochs', help='Number of epochs (default 50000)', type=int, default=50000)
 
@@ -149,6 +149,10 @@ def train_sg_model():
     file_path = os.path.join(c.summary_out_dir, "model_comparison.png")
     plt.savefig(file_path)
 
+    # Export params(true & learned)
+    file_path = os.path.join(c.summary_out_dir, "parameters.csv")
+    export_parameters(c, model, file_path)
+
     # Mse & Mae
     u_exact, u_test, u_learned = get_us(c_out, model, type="FBPINN")
     file_path = os.path.join(c.summary_out_dir, "metrices.csv")
@@ -186,6 +190,10 @@ def train_sg_model():
         plot_model_comparison(c_out, model, type="PINN", ax=ax)
         file_path = os.path.join(c.summary_out_dir, "model_comparison.png")
         plt.savefig(file_path)
+
+        # Export params(true & learned)
+        file_path = os.path.join(c.summary_out_dir, "parameters.csv")
+        export_parameters(c, model, file_path)
 
         # Mse & Mae
         u_exact, u_test, u_learned = get_us(c_out, model, type="PINN")

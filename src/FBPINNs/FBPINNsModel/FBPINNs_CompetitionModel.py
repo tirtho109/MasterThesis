@@ -18,7 +18,7 @@ from fbpinns.constants import Constants, get_subdomain_ws
 from fbpinns.trainers import FBPINNTrainer, PINNTrainer
 from fbpinns.analysis import load_model, FBPINN_solution, PINN_solution
 import matplotlib.pyplot as plt
-from plot import plot_model_comparison, get_us, export_mse_mae
+from plot import plot_model_comparison, get_us, export_mse_mae, export_parameters
 import pandas as pd
 from subdomain_helper import get_subdomain_xsws
 
@@ -157,6 +157,10 @@ def train_comp_model():
     file_path = os.path.join(c.summary_out_dir, "model_comparison.png")
     plt.savefig(file_path)
 
+    # Export params(true & learned)
+    file_path = os.path.join(c.summary_out_dir, "parameters.csv")
+    export_parameters(c, model, file_path)
+
     # Mse & Mae
     u_exact, u_test, u_learned = get_us(c_out, model, type="FBPINN")
     file_path = os.path.join(c.summary_out_dir, "metrices.csv")
@@ -194,6 +198,10 @@ def train_comp_model():
         plot_model_comparison(c_out, model, type="PINN", ax=ax)
         file_path = os.path.join(c.summary_out_dir, "model_comparison.png")
         plt.savefig(file_path)
+
+        # Export params(true & learned)
+        file_path = os.path.join(c.summary_out_dir, "parameters.csv")
+        export_parameters(c, model, file_path)
         
         # Mse & Mae
         u_exact, u_test, u_learned = get_us(c_out, model, type="PINN")

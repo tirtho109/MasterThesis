@@ -10,6 +10,7 @@ from fbpinns.analysis import PINN_solution as PINN_solution_
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from problems import SaturatedGrowthModel, CompetitionModel
 """
 i = epochs
 
@@ -111,3 +112,37 @@ def export_mse_mae(u_exact, u_test, u_learned, file_path=None):
         metrics_df.to_csv(file_path, index=False)
     else:
         metrics_df.to_csv('metrics.csv', index=False)
+
+def export_parameters(c, model, file_path=None):
+    """
+    This function takes the uploaded constants and jax model.And, 
+    export the learned and true params in a csv file.
+    """
+    all_params = model[1]  
+    if c.problem==CompetitionModel:
+        true_keys = ('r_true', 'a1_true', 'a2_true', 'b1_true', 'b2_true')
+        learned_keys = ('r', 'a1', 'a2', 'b1', 'b2')
+        true_params = [float(all_params['static']["problem"][key]) for key in true_keys]
+        learned_params = [float(all_params['trainable']["problem"][key]) for key in learned_keys]
+        data = {
+            'Parameter': ['r', 'a1', 'a2', 'b1', 'b2'],
+            'True': true_params,
+            'Learned': learned_params
+        }
+    elif c.problem==SaturatedGrowthModel:
+        true_params = [float(all_params['static']['problem']['C_true'])]
+        learned_params = [float(all_params['trainable']['problem']['C'])]
+        data = {
+            'Parameter': ['C'],
+            'True': true_params,
+            'Learned': learned_params
+        }
+    else:
+        raise ValueError("Unsupported problem type.")
+
+    # Create DataFrame and save to CSV
+    parameters_df = pd.DataFrame(data)
+    if file_path is not None:
+        parameters_df.to_csv(file_path, index=False)
+    else:
+        parameters_df.to_csv('parameters.csv', index=False)
