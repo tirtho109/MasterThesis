@@ -205,8 +205,13 @@ class CompetitionModel(Problem):
         u = u.reshape(-1) 
         v = v.reshape(-1) 
         data = lambda_data*(jnp.mean((u-ud)**2) + 1e6*jnp.mean((v-vd)**2))
+
+        # Penalty for negative parameters
+        penalty_factor = 1e6
+        penalty_terms = [r, a1, a2, b1, b2]
+        penalties = sum(jnp.where(param < 0, penalty_factor * (param ** 2), 0) for param in penalty_terms)
         
-        return phys + data
+        return phys + data + penalties
     
     @staticmethod
     def model(y, t, params):

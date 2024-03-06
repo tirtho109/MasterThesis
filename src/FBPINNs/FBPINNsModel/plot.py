@@ -123,7 +123,7 @@ def export_parameters(c, model, file_path=None):
         true_keys = ('r_true', 'a1_true', 'a2_true', 'b1_true', 'b2_true')
         learned_keys = ('r', 'a1', 'a2', 'b1', 'b2')
         true_params = [float(all_params['static']["problem"][key]) for key in true_keys]
-        learned_params = [float(all_params['trainable']["problem"][key]) for key in learned_keys]
+        learned_params = [round(float(all_params['trainable']["problem"][key]), 4)  for key in learned_keys]
         data = {
             'Parameter': ['r', 'a1', 'a2', 'b1', 'b2'],
             'True': true_params,
@@ -131,7 +131,7 @@ def export_parameters(c, model, file_path=None):
         }
     elif c.problem==SaturatedGrowthModel:
         true_params = [float(all_params['static']['problem']['C_true'])]
-        learned_params = [float(all_params['trainable']['problem']['C'])]
+        learned_params = [round(float(all_params['trainable']['problem']['C']), 4)]
         data = {
             'Parameter': ['C'],
             'True': true_params,
