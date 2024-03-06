@@ -6,20 +6,17 @@ module_path = os.path.abspath(os.path.join('..'))
 if module_path not in sys.path:
     sys.path.append(module_path)
 
-import jax
 import numpy as np
 import argparse
-import jax.numpy as jnp
 from fbpinns.domains import RectangularDomainND
 from problems import CompetitionModel
 from fbpinns.decompositions import RectangularDecompositionND
 from fbpinns.networks import FCN
-from fbpinns.constants import Constants, get_subdomain_ws
+from fbpinns.constants import Constants
 from fbpinns.trainers import FBPINNTrainer, PINNTrainer
-from fbpinns.analysis import load_model, FBPINN_solution, PINN_solution
+from fbpinns.analysis import load_model
 import matplotlib.pyplot as plt
 from plot import plot_model_comparison, get_us, export_mse_mae, export_parameters
-import pandas as pd
 from subdomain_helper import get_subdomain_xsws
 
 def get_parser():
@@ -48,6 +45,7 @@ def get_parser():
     parser.add_argument('-ld','--lambda_data', help='Weight for data loss (default 1e6)', type=float, default=1e6)
 
     parser.add_argument('-nc','--num_collocation', help='Number of collocation points (default 200)', type=int, default=200)
+    parser.add_argument('--sampler', help='Collocation sampler, one of ["grid", "uniform", "sobol", "halton"] (default: "grid")', type=str, nargs=1, default=['grid'])
     parser.add_argument('-nt','--num_test', help='Number of test points (default 200)', type=int, default=200)
     parser.add_argument('-e','--epochs', help='Number of epochs (default 50000)', type=int, default=50000)
 
@@ -143,6 +141,7 @@ def train_comp_model():
         clear_output=True,
         save_figures=True,
         show_figures=False,
+        sampler=args.sampler[0],
     )
 
     # Train the FBPINNs usnig FBPINNTrainer
