@@ -54,6 +54,7 @@ def get_parser():
     parser.add_argument('--rootdir', type=str, default='CompModels', help='Root directory for saving models and summaries (default: "CompModels")')
     parser.add_argument('--tag', type=str, default='ablation', help='Tag for identifying the run (default: "ablation")')
     parser.add_argument('--sparse', help='Sparsity of training data (default True)', type=bool, nargs=1, default=[False])
+    parser.add_argument('-nl','--noise_level', help='Noise level in training data (default 0.005)', type=float, default=0.005)   
     parser.add_argument('-pt','--pinn_trainer', help='Whether to train PINN trainer (default Faöse)', type=bool, nargs=1, default=[False])
 
     return parser
@@ -89,6 +90,7 @@ def train_comp_model():
         numx=args.numx,
         lambda_phy=args.lambda_phy,
         lambda_data = args.lambda_data,
+        sparse=args.sparse, noise_level=args.noise_level,
     )
 
     # step 3: Define domain decomposition used by the FBPINNs
@@ -123,7 +125,7 @@ def train_comp_model():
     p = sum(args.layers[1:-1])  # Sum of neurons in hidden layers
     n = (args.num_collocation,) # number of training point(collocation)
     run = f"FBPINN_{tag}_{problem.__name__}_{args.model_type[0]}_{network.__name__}_{args.num_subdomain}-ns_{args.window_overlap}-ol_{h}-l_{p}-h_{n[0]}-nC_"
-    run += f"{args.epochs}-e_{args.numx}-nD_{args.time_limit}-tl_{args.num_test}-nT_{args.initial_conditions}-ic_"
+    run += f"{args.epochs}-e_{args.numx}-nD_{args.time_limit}-tl_{args.num_test}-nT_{args.initial_conditions}-ic_{args.sparse}-sp_{args.noise_level}-nl_"
 
     c = ModifiedConstants(
         run=run,
@@ -185,6 +187,7 @@ def train_comp_model():
         p = sum(args.pinns_layers[1:-1])  # Sum of neurons in hidden layers
         run = f"PINN_{tag}_{problem.__name__}_{args.model_type[0]}_{network.__name__}_{h}-l_{p}-h_{n[0]}-nC_"
         run += f"{args.epochs}-e_{args.numx}-nD_{args.time_limit}-tl_{args.num_test}-nT_{args.initial_conditions}-ic_"
+        run += f"{args.sparse}-sp_{args.noise_level}-nl_"
         c["network_init_kwargs"] = dict(layer_sizes=args.pinns_layers)# use a larger neural network
         c["run"] = run
         PINNrun = PINNTrainer(c)

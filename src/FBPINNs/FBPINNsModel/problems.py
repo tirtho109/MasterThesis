@@ -8,8 +8,10 @@ module_path = os.path.abspath(os.path.join('..'))
 if module_path not in sys.path:
     sys.path.append(module_path)
 
+import jax
 import jax.numpy as jnp
 from fbpinns.problems import Problem
+import matplotlib.pyplot as plt
 
 
 class SaturatedGrowthModel(Problem):
@@ -24,7 +26,8 @@ class SaturatedGrowthModel(Problem):
     @staticmethod
     def init_params(C=1, u0=0.01, sd=0.1, 
                     time_limit=[0, 24], numx=50,
-                    lambda_phy=1e0, lambda_data=1e6):
+                    lambda_phy=1e0, lambda_data=1e6,
+                    sparse=False, noise_level=0.0):
         
         static_params = {
             "dims":(1,1),
@@ -35,6 +38,8 @@ class SaturatedGrowthModel(Problem):
             "numx":numx,
             "lambda_phy": lambda_phy,
             "lambda_data": lambda_data,
+            "sparse":sparse,
+            "noise_level":noise_level,
         }
         trainable_params = {
             "C":jnp.array(0.), # learn C from constraints
@@ -63,8 +68,12 @@ class SaturatedGrowthModel(Problem):
         time_limit = all_params["static"]["problem"]["time_limit"]
         numx = all_params["static"]["problem"]["numx"]
         # Data Loss
-        x_batch_data = jnp.linspace(time_limit[0],time_limit[1],numx).astype(float).reshape((numx,1)) #20 data observation # numx = 20, time_limit = [0,24]
-        u_data = SaturatedGrowthModel.exact_solution(all_params, x_batch_data)
+        if all_params['static']['problem']['sparse']:
+            x_batch_data = jnp.sort(jax.random.uniform(key=key, shape=(numx,1), minval=time_limit[0], maxval=time_limit[1]), axis=0)
+        else:
+            x_batch_data = jnp.linspace(time_limit[0],time_limit[1],numx).astype(float).reshape((numx,1)) 
+        noise = jax.random.normal(key, shape=(numx,1))  * all_params['static']['problem']['noise_level']
+        u_data = SaturatedGrowthModel.exact_solution(all_params, x_batch_data) + noise
         required_ujs_data = (
             (0, ()),
         )
@@ -113,14 +122,14 @@ class SaturatedGrowthModel(Problem):
         exp = jnp.exp(-C*x_batch)
         u = C / (1 + ((C - u0) / u0) * exp) # solution for C_learned
         return u.reshape(-1,1)
-    
 
 class CompetitionModel(Problem):
 
     @staticmethod
     def init_params(params=[0.5, 0.7, 0.3, 0.3, 0.6], 
                     u0=2, v0=1, sd=0.1, time_limit=[0,24], 
-                    numx=50, lambda_phy=1e0, lambda_data=1e6):
+                    numx=50, lambda_phy=1e0, lambda_data=1e6,
+                    sparse=False, noise_level=0.0):
         
         r, a1, a2, b1, b2 = params 
         static_params = {
@@ -137,6 +146,8 @@ class CompetitionModel(Problem):
             "numx":numx,
             "lambda_phy": lambda_phy,
             "lambda_data": lambda_data,
+            "sparse":sparse,
+            "noise_level":noise_level,
         }
         trainable_params = {
             "r":jnp.array(0.),
@@ -159,14 +170,16 @@ class CompetitionModel(Problem):
         )
 
         # Data Loss
-        u0 = all_params["static"]["problem"]["u0"]
-        v0 = all_params["static"]["problem"]["v0"]
         time_limit = all_params["static"]["problem"]["time_limit"]
         numx = all_params["static"]["problem"]["numx"]
-        x_batch_data = jnp.linspace(time_limit[0], time_limit[1],numx).astype(float).reshape((-1,1))
+        if all_params['static']['problem']['sparse']:
+            x_batch_data = jnp.sort(jax.random.uniform(key=key, shape=(numx,1), minval=time_limit[0], maxval=time_limit[1]), axis=0)
+        else:
+            x_batch_data = jnp.linspace(time_limit[0],time_limit[1],numx).astype(float).reshape((numx,1)) 
+        noise = jax.random.normal(key, shape=(numx,1))  * all_params['static']['problem']['noise_level']
         solution = CompetitionModel.exact_solution(all_params, x_batch_data)
-        u_data = solution[:,0]
-        v_data = solution[:,1]
+        u_data = solution[:,0] + noise
+        v_data = solution[:,1] + noise
         required_ujs_data = (
             (0, ()), 
             (1, ()),  
