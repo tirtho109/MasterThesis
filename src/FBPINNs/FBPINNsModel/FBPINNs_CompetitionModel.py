@@ -16,7 +16,7 @@ from fbpinns.constants import Constants
 from fbpinns.trainers import FBPINNTrainer, PINNTrainer
 from fbpinns.analysis import load_model
 import matplotlib.pyplot as plt
-from plot import plot_model_comparison, get_us, export_mse_mae, export_parameters
+from plot import plot_model_comparison, get_us, export_mse_mae, export_parameters, export_energy_plot
 from subdomain_helper import get_subdomain_xsws
 
 def get_parser():
@@ -180,6 +180,11 @@ def train_comp_model():
     file_path = os.path.join(c.summary_out_dir, "normalized_loss.png")
     plt.savefig(file_path)
 
+    # plots
+    # Energy plot
+    file_path = os.path.join(c.summary_out_dir, "energy_plot.png")
+    export_energy_plot(c_out, model, model_type=args.model_type[0],file_path=file_path)
+
     if args.pinn_trainer[0]:
         # PINN trainer
         h = len(args.pinns_layers) - 2  # Number of hidden layers
@@ -222,6 +227,11 @@ def train_comp_model():
         ax.legend()
         file_path = os.path.join(c.summary_out_dir, "normalized_loss.png")
         plt.savefig(file_path)
+
+        # plots
+        # Energy plot
+        file_path = os.path.join(c.summary_out_dir, "energy_plot.png")
+        export_energy_plot(c_out, model, model_type=args.model_type[0],file_path=file_path)
 
 
 if __name__=="__main__":

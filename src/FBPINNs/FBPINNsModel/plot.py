@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from problems import SaturatedGrowthModel, CompetitionModel
+import matplotlib.gridspec as gridspec
 """
 i = epochs
 
@@ -146,3 +147,92 @@ def export_parameters(c, model, file_path=None):
         parameters_df.to_csv(file_path, index=False)
     else:
         parameters_df.to_csv('parameters.csv', index=False)
+       
+# Energy plots
+def plot_energy(phi_values, u, v, ax=None, set_title=None):
+    if ax is None:
+        plt.figure(figsize=(4, 3))
+        ax = plt.gca()
+    
+    contour = ax.contourf(u, v, phi_values, levels=50, cmap='jet')
+    plt.colorbar(contour, ax=ax)
+    
+    if set_title is None:
+        ax.set_title("Energy Landscape (Lyapunov Function)")
+    else:
+        ax.set_title(set_title)
+    
+    ax.set_xlabel("$u$ (Immune Cells)")
+    ax.set_ylabel("$v$ (Virus)")
+
+    if ax is None:
+        plt.show()
+
+# Calculate Lyapunov Function
+"""
+    Choosen:
+    dphi/du = -b1*b2*a1*r*(1-a1*u-a2*v)
+    dphi/dv = -a1*a2*b2*r*(1-b1*u-b2*v)
+
+    phi_dot = -b1*b2*a1*r*u(1-a1*u-a2*v)**2 - a1*a2*b2*r**2*v*(1-b1u-b2v)**2 <= 0
+    phi = (-a1*b2*r*(b1*u+a2*v) + a1*a2*b1*b2*r*u*v + 0.5*r*a1*b2*(a1*b1*u*u + a2*b2*v*v))
+
+"""
+def phi_comp(u, v, params):
+     r, a1, a2, b1, b2 = params
+     #TODO Check later (sign)
+    #  return (- b1 * b2 * u + 0.5 * b1 * b2 * a1 * u**2 + b1 * b2 * a2 * v * u -
+    #         a1 * a2 * r * v + a1 * a2 * r * b1 * u * v + 0.5 * a1 * a2 * r * b2 * v**2)
+     return (-a1*b2*r*(b1*u+a2*v) + a1*a2*b1*b2*r*u*v + 0.5*r*a1*b2*(a1*b1*u*u + a2*b2*v*v))
+
+def export_energy_plot(c, model, model_type="survival", file_path=None):
+    if c.problem.__name__ != 'CompetitionModel':
+        raise ValueError("Unsupported problem type.")
+    all_params = model[1]
+    true_keys = ('r_true', 'a1_true', 'a2_true', 'b1_true', 'b2_true')
+    learned_keys = ('r', 'a1', 'a2', 'b1', 'b2')
+    true_params = [float(all_params['static']["problem"][key]) for key in true_keys]
+    learned_params = [float(all_params['trainable']["problem"][key]) for key in learned_keys]
+
+    fig = plt.figure(figsize=(12, 6), dpi=300)
+    gs = gridspec.GridSpec(2, 2, height_ratios=[3, 1]) 
+    ax1 = fig.add_subplot(gs[0, 0])  
+    ax2 = fig.add_subplot(gs[0, 1]) 
+    # make grid
+    if model_type not in ["survival", "coexistence"]:
+        raise ValueError("Unsupported model type")
+    
+    if model_type=="survival":
+        u_range = np.linspace(-.5, 5, 500)
+        v_range = np.linspace(0, 5, 500)
+        u, v = np.meshgrid(u_range, v_range)
+    else:
+        u_range = np.linspace(-.5, 2.5, 500)
+        v_range = np.linspace(0, 3, 500)
+        u, v = np.meshgrid(u_range, v_range)
+
+    phi_comp_values_learned = phi_comp(u, v, learned_params)
+    phi_comp_value_true = phi_comp(u, v, true_params)
+
+    plot_energy(phi_values=phi_comp_values_learned, u=u, v=v, ax=ax1, set_title="Learned")
+    plot_energy(phi_values=phi_comp_value_true, u=u, v=v, ax=ax2, set_title="True")
+    param_learned_formatted = ['{:.2f}'.format(param) for param in learned_params]
+
+    # table
+    columns = ['r', 'a1', 'a2', 'b1', 'b2']
+    rows = ['Learned Params', 'True Params']
+    cell_text = [param_learned_formatted, true_params]
+
+    ax3 = fig.add_subplot(gs[1, :])
+    ax3.axis('tight')
+    ax3.axis('off')
+    table = ax3.table(cellText=cell_text, rowLabels=rows, colLabels=columns, loc='center')
+    table.auto_set_font_size(False)
+    table.set_fontsize(10)
+    table.scale(1, 1.2)
+
+    fig.suptitle(f"Energy Plot({model_type} model)")
+    if file_path is not None:
+        plt.savefig(file_path)
+    else:
+        plt.savefig("energy_plot.png")
