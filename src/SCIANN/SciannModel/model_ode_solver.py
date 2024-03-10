@@ -7,6 +7,7 @@ import os
 import sys
 import pandas as pd
 from scipy.integrate import odeint
+from scipy.interpolate import interp1d
 import plotly.graph_objects as go
 import plotly.io as pio
 
@@ -107,6 +108,63 @@ class BaseModel(ABC):
             else:
                 plt.show()
         return tTrain, sol_noisy
+    
+
+    def generate_training_dataset(self, numpoints=500, 
+                      sparse=False, time_limit=None, 
+                      noise_level=0.0, show_figure=False,
+                      save_path=None):
+         # check conditions
+        assert numpoints > 1, "Number of points must be greater than one."
+        if time_limit is not None:
+            if not isinstance(time_limit, (list, tuple)) or len(time_limit) != 2:
+                raise ValueError("Time limit 'time_limit' must be a list or tuple with two elements.")
+            if not 0 <= time_limit[0] < time_limit[1]:
+                raise ValueError("Time limit 'time_limit' must contain increasing values greater than zero.")
+        else:
+            time_limit = [0, self.tend]
+
+        if sparse:
+            tTrain = np.sort(np.random.uniform(time_limit[0], time_limit[1], numpoints))
+        else:
+            tTrain = np.linspace(time_limit[0], time_limit[1], numpoints)
+        
+        t_span = np.arange(0, self.tend, 0.0002)
+        solution = odeint(self._model, self.initial_conditions, t_span)
+
+        sol = np.zeros((tTrain.shape[0], solution.shape[1]))
+
+        if solution.shape[1] == 2:
+            # Interpolation
+            u_interp = interp1d(t_span, solution[:, 0], kind='cubic')
+            v_interp = interp1d(t_span, solution[:, 1], kind='cubic')
+            sol[:, 0] = u_interp(tTrain)
+            sol[:, 1] = v_interp(tTrain)
+        elif solution.shape[1] == 1:
+            u_interp = interp1d(t_span, solution[:,0], kind='cubic')
+            sol[:, 0] = u_interp(tTrain)
+        print("Sol shape after: ", sol.shape)
+        noise = np.random.normal(0, noise_level, sol.shape)
+        sol_noisy = sol + noise
+        if show_figure:
+            for i in range(sol_noisy.shape[1]):
+                plt.scatter(tTrain, sol_noisy[:,i], label=f'Cell Population {i+1}')
+                plt.legend()
+            title = f'Training Points - Noise Level: {noise_level}'
+            if time_limit:
+                title += f', Window: [{time_limit[0]}, {time_limit[1]}]'
+            plt.title(title)
+            plt.xlabel('t')
+            plt.ylabel('Population')
+            plt.ylim(-0.2, np.max(sol_noisy+0.2))
+            plt.xlim(-0.5, self.tend+1)
+            if save_path:
+                if os.path.basename(save_path) == '':
+                    raise ValueError("Please provide a file name with the save path.")
+                plt.savefig(save_path)
+            else:
+                plt.show()
+        return tTrain, sol_noisy
 
 
 class SaturatedGrowthModel(BaseModel):
@@ -193,15 +251,15 @@ def model_comparison(true_model, predicted_model, nn_model, t_span=None, ax=None
         nn_v_sol = nn_model[:,2]
         ax.plot(t_span, true_sol[:, 0], label='True u', linestyle='-', color='blue', linewidth=1.5)
         ax.plot(t_span, true_sol[:, 1], label='True v', linestyle='-', color='green', linewidth=1.5)
-        ax.plot(t_span, predicted_sol[:, 0], label='Predicted u', linestyle='--', color='blue',linewidth=1.5)
-        ax.plot(t_span, predicted_sol[:, 1], label='Predicted v', linestyle='--', color='green', linewidth=1.5)
-        ax.plot(t_span, nn_u_sol, label="NN u", linestyle='dashdot', color='blue', linewidth=1.5)
-        ax.plot(t_span, nn_v_sol, label="NN v", linestyle='dashdot', color='green', linewidth=1.5)
+        ax.plot(t_span, predicted_sol[:, 0], label='Learned u', linestyle='--', color='blue',linewidth=1.5)
+        ax.plot(t_span, predicted_sol[:, 1], label='Learned v', linestyle='--', color='green', linewidth=1.5)
+        ax.plot(t_span, nn_u_sol, label="NN pred u", linestyle='dashdot', color='blue', linewidth=1.5)
+        ax.plot(t_span, nn_v_sol, label="NN pred v", linestyle='dashdot', color='green', linewidth=1.5)
     else:
         # Plot only u for both true and predicted solutions
         nn_sol = nn_model[:,1]
         ax.plot(t_span, true_sol[:, 0], label='True Solution', linestyle='-', linewidth=1.5)
-        ax.plot(t_span, predicted_sol[:, 0], label='Predicted Solution', linestyle='--', linewidth=1.5)
+        ax.plot(t_span, predicted_sol[:, 0], label='Learned Solution', linestyle='--', linewidth=1.5)
         ax.plot(t_span, nn_sol, label="NN Solution", linestyle='dashdot', linewidth=1.5)
     if title is not None:
         ax.set_title(title)
@@ -219,3 +277,22 @@ def cust_semilogx(AX, X, Y, xlabel, ylabel, label):
         im = AX.semilogy(X, Y, label=label)
     if xlabel is not None: AX.set_xlabel(xlabel)
     if ylabel is not None: AX.set_ylabel(ylabel)
+
+
+def export_mse_mae(u_exact, u_test, u_learned, file_path=None):
+    """
+    Calculate MSE and MAE of the predicted model and learned model
+    """
+    mse_test = np.mean((u_exact - u_test)**2)
+    mse_learned = np.mean((u_exact - u_learned)**2)
+    mae_test = np.mean(np.abs(u_exact - u_test))
+    mae_learned = np.mean(np.abs(u_exact - u_learned))
+    metrics_df = pd.DataFrame({
+        'Metric': ['MSE', 'MAE'],
+        'Test': [mse_test, mae_test],
+        'Learned': [mse_learned, mae_learned]
+    })
+    if file_path is not None:
+        metrics_df.to_csv(file_path, index=False)
+    else:
+        metrics_df.to_csv('metrics.csv', index=False)
