@@ -53,10 +53,15 @@ folder_name = (
     f"SGModel_"
     f"tl_{'-'.join(map(str, args.time_limit))}_"
     f"nl_{args.noise_level}_"
-    f"numx_{args.numx[0]}_"
-    f"sparse_{args.sparse[0]}_"
+    f"nX_{args.numx[0]}_"
+    f"nT_{args.nTest[0]}_"
+    f"sp_{args.sparse[0]}_"
     f"fl_{args.feature_library[0]}_"
     f"opt_{args.optimizer[0]}_"
+    f"mt_{args.max_threshold}_"
+    f"nt_{args.num_threshold}_"
+    f"th_{args.thresholder[0]}_"
+    f"ic_{args.initial_conditions}_"
 )
 output_folder = os.path.join(args.outputpath[0], folder_name)
 
@@ -76,7 +81,7 @@ def run_sg_model():
     x_train, t_train, x_test, t_test = create_datasets(model=SaturatedGrowthModel, 
                                                        tend=args.tend, 
                                                        numx=args.numx[0],
-                                                       nTest=100,
+                                                       nTest=args.nTest[0],
                                                        initial_conditions=[args.initial_conditions], 
                                                        params=C, 
                                                        training_time_limit=args.time_limit, 

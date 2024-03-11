@@ -30,6 +30,8 @@ def plot_models(t_end, initial_condition, params, original_model, sindy_model, a
     ax.set_xlabel('Time (t)')
     ax.set_ylabel('Population')
     ax.set_title('Comparison of Original and SINDy Models')
+    ax.set_xlim(-0.5, 25)
+    ax.set_ylim(-0.2, max(u_sol)+0.5)
     ax.legend()
     if ax is None:
          ax.show()

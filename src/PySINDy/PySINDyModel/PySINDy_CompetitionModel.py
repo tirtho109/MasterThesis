@@ -21,8 +21,9 @@ parser.add_argument('--model_type', help='Survival or co-existence model (defaul
 
 # arguments for training data generator
 parser.add_argument('-nx', '--numx', help='Num Node in X (default 100)', type=int, nargs=1, default=[100])
+parser.add_argument('-nT', '--nTest', help='# of test point(default 200)', type=int, nargs=1, default=[200])
 parser.add_argument('--sparse', help='Sparsity of training data (default True)', type=bool, nargs=1, default=[False])
-parser.add_argument('-tl', '--time_limit', help='Time window for the training data (default [10, 30])', type=int, nargs=2, default=[10, 24])
+parser.add_argument('-tl', '--time_limit', help='Time window for the training data (default [10, 24])', type=int, nargs=2, default=[10, 24])
 parser.add_argument('-nl', '--noise_level', help='Level of noise in training data (default 0.005)', type=float, default=0.005)
 parser.add_argument('-sf', '--show_figure', help='Show training data (default True)', type=bool, nargs=1, default=[True])
 parser.add_argument('-nt','--num_threshold', help='Number of threshold to be scanned (default 10)', type=int, default=10)
@@ -54,10 +55,15 @@ folder_name = (
     f"CompModel_{args.model_type[0]}_"
     f"tl_{'-'.join(map(str, args.time_limit))}_"
     f"nl_{args.noise_level}_"
-    f"numx_{args.numx[0]}_"
-    f"sparse_{args.sparse[0]}_"
+    f"nX_{args.numx[0]}_"
+    f"nT_{args.nTest[0]}_"
+    f"sp_{args.sparse[0]}_"
     f"fl_{args.feature_library[0]}_"
     f"opt_{args.optimizer[0]}_"
+    f"mt_{args.max_threshold}_"
+    f"nt_{args.num_threshold}_"
+    f"th_{args.thresholder[0]}_"
+    f"ic_{args.initial_conditions}_"
 )
 output_folder = os.path.join(args.outputpath[0], folder_name)
 
@@ -83,7 +89,7 @@ def run_comp_model():
     x_train, t_train, x_test, t_test = create_datasets(model=CompetitionModel, 
                                                        tend=args.tend, 
                                                        numx=args.numx[0],
-                                                       nTest=100,
+                                                       nTest=args.nTest[0],
                                                        initial_conditions=args.initial_conditions, 
                                                        params=params, 
                                                        training_time_limit=args.time_limit, 
