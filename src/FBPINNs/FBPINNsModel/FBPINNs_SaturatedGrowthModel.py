@@ -1,5 +1,6 @@
 import sys
 import os
+import time
 
 module_path = os.path.abspath(os.path.join('..'))
 
@@ -114,9 +115,9 @@ def train_sg_model():
     h = len(args.layers) - 2  # Number of hidden layers
     p = sum(args.layers[1:-1])  # Sum of neurons in hidden layers
     n = (args.num_collocation,) # number of training point(collocation)
-    run = f"FBPINN_{tag}_{problem.__name__}_{network.__name__}_{args.num_subdomain}-ns_{args.window_overlap}-ol_{h}-l_{p}-h_{n[0]}-nC_"
+    run = f"FBPINN_{tag}_SG_{network.__name__}_{args.num_subdomain}-ns_{args.window_overlap}-ol_{h}-l_{p}-h_{n[0]}-nC_"
     run += f"{args.epochs}-e_{args.numx}-nD_{args.time_limit}-tl_{args.num_test}-nT_{args.initial_conditions}-ic_"
-    run += f"{args.sparse}-sp_{args.noise_level}-nl_"
+    run += f"{args.sparse[0]}-sp_{args.noise_level}-nl_"
 
     c = ModifiedConstants(
         run=run,
@@ -135,11 +136,18 @@ def train_sg_model():
         save_figures=True,
         show_figures=False,
         sampler=args.sampler[0],
+        model_save_freq = 5000,
     )
 
     # Train the FBPINNs usnig FBPINNTrainer
+    training_time = time.time()
     FBPINNrun = FBPINNTrainer(c)
     FBPINNrun.train()
+
+    training_time = time.time() - training_time
+    file_path = os.path.join(c.summary_out_dir, "FBPINNs_training_time.txt")
+    with open(file_path, 'w') as file:
+        file.write(str(training_time))
 
     # import model
     c_out, model = load_model(run, rootdir=args.rootdir+"/")
@@ -177,13 +185,20 @@ def train_sg_model():
         # PINN trainer
         h = len(args.pinns_layers) - 2  # Number of hidden layers
         p = sum(args.pinns_layers[1:-1])  # Sum of neurons in hidden layers
-        run = f"PINN_{tag}_{problem.__name__}_{network.__name__}_{h}-l_{p}-h_{n[0]}-nC_"
+        run = f"PINN_{tag}_SG_{network.__name__}_{h}-l_{p}-h_{n[0]}-nC_"
         run += f"{args.epochs}-e_{args.numx}-nD_{args.time_limit}-tl_{args.num_test}-nT_{args.initial_conditions}-ic_"
-        run += f"{args.sparse}-sp_{args.noise_level}-nl_"
+        run += f"{args.sparse[0]}-sp_{args.noise_level}-nl_"
         c["network_init_kwargs"] = dict(layer_sizes=args.pinns_layers)# use a larger neural network
         c["run"] = run
+
+        training_time = time.time()
         PINNrun = PINNTrainer(c)
         PINNrun.train()
+
+        training_time = time.time() - training_time
+        file_path = os.path.join(c.summary_out_dir, "PINNs_training_time.txt")
+        with open(file_path, 'w') as file:
+            file.write(str(training_time))
 
         # import model
         c_out, model = load_model(run, rootdir=args.rootdir+"/")

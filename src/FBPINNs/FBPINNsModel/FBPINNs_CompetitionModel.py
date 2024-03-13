@@ -1,5 +1,6 @@
 import sys
 import os
+import time
 
 module_path = os.path.abspath(os.path.join('..'))
 
@@ -42,7 +43,7 @@ def get_parser():
     parser.add_argument('-l', '--layers', help='Num layers and neurons (default 2 layers [1, 32, 2])', type=int, nargs='+', default=[1, 32, 2])
     parser.add_argument('-pl', '--pinns_layers', help='Num of pinns layers and neurons (default 3 layers [1, 5, 5, 5, 2])', type=int, nargs='+', default=[1, 5, 5, 5, 2])
     parser.add_argument('-lp','--lambda_phy', help='Weight for physics loss (default 1e0)', type=float, default=1e0)
-    parser.add_argument('-ld','--lambda_data', help='Weight for data loss (default 1e6)', type=float, default=1e6)
+    parser.add_argument('-ld','--lambda_data', help='Weight for data loss (default 1e6)', type=float, default=1e0)
 
     parser.add_argument('-nc','--num_collocation', help='Number of collocation points (default 200)', type=int, default=200)
     parser.add_argument('--sampler', help='Collocation sampler, one of ["grid", "uniform", "sobol", "halton"] (default: "grid")', type=str, nargs=1, default=['grid'])
@@ -122,8 +123,8 @@ def train_comp_model():
     h = len(args.layers) - 2  # Number of hidden layers
     p = sum(args.layers[1:-1])  # Sum of neurons in hidden layers
     n = (args.num_collocation,) # number of training point(collocation)
-    run = f"FBPINN_{tag}_{problem.__name__}_{args.model_type[0]}_{network.__name__}_{args.num_subdomain}-ns_{args.window_overlap}-ol_{h}-l_{p}-h_{n[0]}-nC_"
-    run += f"{args.epochs}-e_{args.numx}-nD_{args.time_limit}-tl_{args.num_test}-nT_{args.initial_conditions}-ic_{args.sparse}-sp_{args.noise_level}-nl_"
+    run = f"FBPINN_{tag}_CM_{args.model_type[0]}_{network.__name__}_{args.num_subdomain}-ns_{args.window_overlap}-ol_{h}-l_{p}-h_{n[0]}-nC_"
+    run += f"{args.epochs}-e_{args.numx}-nD_{args.time_limit}-tl_{args.num_test}-nT_{args.initial_conditions}-ic_{args.sparse[0]}-sp_{args.noise_level}-nl_"
 
     c = ModifiedConstants(
         run=run,
@@ -142,11 +143,18 @@ def train_comp_model():
         save_figures=True,
         show_figures=False,
         sampler=args.sampler[0],
+        model_save_freq = 5000,
     )
 
     # Train the FBPINNs usnig FBPINNTrainer
+    training_time = time.time()
     FBPINNrun = FBPINNTrainer(c)
     FBPINNrun.train()
+
+    training_time = time.time() - training_time
+    file_path = os.path.join(c.summary_out_dir, "FBPINNs_training_time.txt")
+    with open(file_path, 'w') as file:
+        file.write(str(training_time))
 
     # import model
     c_out, model = load_model(run, rootdir=args.rootdir+"/")
@@ -189,13 +197,20 @@ def train_comp_model():
         # PINN trainer
         h = len(args.pinns_layers) - 2  # Number of hidden layers
         p = sum(args.pinns_layers[1:-1])  # Sum of neurons in hidden layers
-        run = f"PINN_{tag}_{problem.__name__}_{args.model_type[0]}_{network.__name__}_{h}-l_{p}-h_{n[0]}-nC_"
+        run = f"PINN_{tag}_CM_{args.model_type[0]}_{network.__name__}_{h}-l_{p}-h_{n[0]}-nC_"
         run += f"{args.epochs}-e_{args.numx}-nD_{args.time_limit}-tl_{args.num_test}-nT_{args.initial_conditions}-ic_"
-        run += f"{args.sparse}-sp_{args.noise_level}-nl_"
+        run += f"{args.sparse[0]}-sp_{args.noise_level}-nl_"
         c["network_init_kwargs"] = dict(layer_sizes=args.pinns_layers)# use a larger neural network
         c["run"] = run
+
+        training_time = time.time()
         PINNrun = PINNTrainer(c)
         PINNrun.train()
+
+        training_time = time.time() - training_time
+        file_path = os.path.join(c.summary_out_dir, "PINNs_training_time.txt")
+        with open(file_path, 'w') as file:
+            file.write(str(training_time))
 
         # import model
         c_out, model = load_model(run, rootdir=args.rootdir+"/")
