@@ -10,7 +10,7 @@ from fbpinns.analysis import PINN_solution as PINN_solution_
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from problems import SaturatedGrowthModel, CompetitionModel
+from FBPINNsModel.problems import SaturatedGrowthModel, CompetitionModel
 import matplotlib.gridspec as gridspec
 """
 i = epochs

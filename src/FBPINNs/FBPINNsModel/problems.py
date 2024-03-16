@@ -26,7 +26,7 @@ class SaturatedGrowthModel(Problem):
     @staticmethod
     def init_params(C=1, u0=0.01, sd=0.1, 
                     time_limit=[0, 24], numx=50,
-                    lambda_phy=1e0, lambda_data=1e6,
+                    lambda_phy=1e0, lambda_data=1e0,
                     sparse=False, noise_level=0.0):
         
         static_params = {
@@ -128,7 +128,7 @@ class CompetitionModel(Problem):
     @staticmethod
     def init_params(params=[0.5, 0.7, 0.3, 0.3, 0.6], 
                     u0=2, v0=1, sd=0.1, time_limit=[0,24], 
-                    numx=50, lambda_phy=1e0, lambda_data=1e6,
+                    numx=50, lambda_phy=1e0, lambda_data=1e0,
                     sparse=False, noise_level=0.0):
         
         r, a1, a2, b1, b2 = params 
@@ -217,7 +217,7 @@ class CompetitionModel(Problem):
         _, ud, vd, u, v = constraints[1]
         u = u.reshape(-1) 
         v = v.reshape(-1) 
-        data = lambda_data*(jnp.mean((u-ud)**2) + 1e6*jnp.mean((v-vd)**2))
+        data = lambda_data*(jnp.mean((u-ud)**2) + lambda_data*jnp.mean((v-vd)**2))
 
         # Penalty for negative parameters
         penalty_factor = 1e6
