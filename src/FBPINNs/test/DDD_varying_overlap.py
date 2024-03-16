@@ -58,7 +58,8 @@ def plot_DDD_varying_overlap():
     sampler='grid'
 
     # Varying parameters
-    wos =[1.1, 1.5, 1.9, 2.3, 2.7]
+    # wos =[1.1, 1.5, 1.9, 2.3, 2.7]
+    wos =[1.1, 1.3, 1.5, 1.7, 1.9, 2.1, 2.3, 2.5, 2.7, 2.9]
     time_limits = [[0,10], [10,24], [0, 24]]
 
     # type of problem and other fix params
@@ -194,8 +195,8 @@ def plot_DDD_varying_overlap():
                         plt.savefig(file_path)
 
         fig = plt.figure(figsize=(12, 10), dpi=300)
-        gs = gridspec.GridSpec(3, 1, height_ratios=[0.3, 5, 8])
-        gs_lossplot = gridspec.GridSpecFromSubplotSpec(2, 3, subplot_spec=gs[2], wspace=0.3) 
+        gs = gridspec.GridSpec(3, 1, height_ratios=[1, 5, 4])
+        gs_lossplot = gridspec.GridSpecFromSubplotSpec(1, 3, subplot_spec=gs[2], wspace=0.3) 
 
         ax1 = fig.add_subplot(gs_lossplot[0, 0])
         ax2 = fig.add_subplot(gs_lossplot[0, 1])
@@ -296,7 +297,7 @@ def plot_DDD_varying_overlap():
         plt.suptitle('MSE Value by Time Limit and Window Overlaps', fontsize=14, verticalalignment='top')#, y=0.95)
         plt.subplots_adjust(hspace=0.2, top=0.88)
         plt.tight_layout()
-        file_path = f"{rootdir}/summaries/number_of_subdomain_heatmap_with_params.png"
+        file_path = f"{rootdir}/summaries/MSE_varying_window_overlap.png"
         plt.savefig(file_path)
 
         print("DONE")
