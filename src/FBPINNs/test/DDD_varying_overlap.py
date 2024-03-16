@@ -32,7 +32,7 @@ parser.add_argument('--plot', help='Plot the model', nargs='?', default=False)
 
 args = parser.parse_args()
 
-def plot_DDD_number_of_subdomain():
+def plot_DDD_varying_overlap():
     class ModifiedConstants(Constants):
         @property
         def summary_out_dir(self):
@@ -50,14 +50,15 @@ def plot_DDD_number_of_subdomain():
     noise_level = 0.005
     tbegin = 0
     tend = 24
-    wo = 1.9
+    # wo = 1.9
+    nsub=2
     wi = 1.0005
     tag = "DDD"
     epochs = 50000
     sampler='grid'
 
     # Varying parameters
-    nsubs = np.arange(2,11,1) # Number of subdomain
+    wos =[1.1, 1.5, 1.9, 2.3, 2.7]
     time_limits = [[0,10], [10,24], [0, 24]]
 
     # type of problem and other fix params
@@ -68,8 +69,8 @@ def plot_DDD_number_of_subdomain():
     params_type = [1,  [0.5, 0.7, 0.3, 0.3, 0.6], [0.5, 0.3, 0.6, 0.7, 0.3]] # sg, coexistence, survival
     cases = ["sg", "coexistence", "survival"]
 
-    parentdir = "DDD_NumOfSubdomain"
-    rootdirs = ["DDD_NumOfSubdomain_sg", "DDD_NumOfSubdomain_coexistence", "DDD_NumOfSubdomain_Survival"]
+    parentdir = "DDD_overlap"
+    rootdirs = ["DDD_overlap_sg", "DDD_overlap_coexistence", "DDD_overlap_survival"]
     rootdirs_with_parent = [os.path.join(parentdir, rd) for rd in rootdirs]
 
     for (layer, problem, params, rootdir, name) in zip(layers, problem_types, params_type, rootdirs_with_parent, cases):
@@ -110,7 +111,7 @@ def plot_DDD_number_of_subdomain():
         # step 3
         decomposition = RectangularDecompositionND
         decomposition_kwargs_set = []
-        for nsub in nsubs:
+        for wo in wos:
             for tl in time_limits:
                 if not isinstance(tl, (list, tuple)) or len(tl) != 2:
                     raise ValueError(f"Invalid time_limit format: {tl}")
@@ -120,7 +121,7 @@ def plot_DDD_number_of_subdomain():
                     subdomain_ws=subdomain_ws,
                     unnorm=(0.,1.),
                 )
-                decomposition_kwargs_set.append((decomposition_init_kwargs, nsub, tl))
+                decomposition_kwargs_set.append((decomposition_init_kwargs, wo, tl))
 
         # step 4
         network = FCN# place a fully-connected network in each subdomain
@@ -134,7 +135,7 @@ def plot_DDD_number_of_subdomain():
 
         runs = []
         for (problem_kwargs, tl) in problem_kwargs_set:
-            for (decomposition_kwargs, nsub, tld) in decomposition_kwargs_set:
+            for (decomposition_kwargs, wo, tld) in decomposition_kwargs_set:
                 if tl==tld:
                     run = f"FBPINN_{tag}_{nsub}_subdomains_{wo}_wo_{tl}_tl"
                     runs.append(run)
@@ -192,7 +193,6 @@ def plot_DDD_number_of_subdomain():
                         file_path = os.path.join(c.summary_out_dir, "normalized_loss.png")
                         plt.savefig(file_path)
 
-        # plot
         fig = plt.figure(figsize=(12, 10), dpi=300)
         gs = gridspec.GridSpec(3, 1, height_ratios=[0.3, 5, 8])
         gs_lossplot = gridspec.GridSpecFromSubplotSpec(2, 3, subplot_spec=gs[2], wspace=0.3) 
@@ -200,14 +200,15 @@ def plot_DDD_number_of_subdomain():
         ax1 = fig.add_subplot(gs_lossplot[0, 0])
         ax2 = fig.add_subplot(gs_lossplot[0, 1])
         ax3 = fig.add_subplot(gs_lossplot[0, 2])
-        
-         # Create Dataset for plotting
-        df = pd.DataFrame(columns=['Time Limit', 'Number of Subdomains', 'MSE Learned', 'MSE Test'])
+
+        # Create Dataset for plotting
+        df = pd.DataFrame(columns=['Time Limit', 'Window Overlap', 'MSE Learned', 'MSE Test'])
         for run in runs:
             c_out, model = load_model(run, rootdir=rootdir+"/")
-            
-            all_params = model[1]
-            number_of_subs = all_params['static']['decomposition']['m']
+
+            parts = c_out.run.split("_")
+            wo_index = 4
+            wo = parts[wo_index]
 
             tl = c_out.problem_init_kwargs['time_limit']
             tl_key = f"{tl[0]}-{tl[1]}"
@@ -221,30 +222,29 @@ def plot_DDD_number_of_subdomain():
                 raise ValueError(f"Invalid time_limit key: {tl_key}")
             
             # Now plot on the determined axis
-            ax.plot(i, l1n, label=f"nsub-{number_of_subs}")
+            ax.plot(i, l1n, label=f"wo-{wo}")
             ax.set_yscale('log')
             ax.set_title(f'Time Limit: {tl_key}')
             ax.set_xlabel('Training Steps')
             ax.set_ylabel('Normalized l1 test loss')
-            # ax.legend()
-            ax.legend(ncol=max(len(nsubs)//2 - 1, 1), bbox_to_anchor=(0.5, -0.2), 
+            ax.legend(ncol=3, bbox_to_anchor=(0.5, -0.2), 
                       loc='upper center', fontsize='small')
             #################################
-
+            
             u_exact, u_test, u_learned = get_us(c_out, model, type="FBPINN")
             mse_test = np.mean((u_exact - u_test)**2)
             mse_learned = np.mean((u_exact - u_learned)**2)
             
-            new_row = pd.DataFrame({'Time Limit': [tl_key], 'Number of Subdomains': [number_of_subs],
+            new_row = pd.DataFrame({'Time Limit': [tl_key], 'Window Overlap': [wo],
                                 'MSE Learned': [mse_learned], 'MSE Test': [mse_test]})
             df = pd.concat([df, new_row], ignore_index=True)
-            
+
         df['MSE Learned'] = pd.to_numeric(df['MSE Learned'], errors='coerce')
         df['MSE Test'] = pd.to_numeric(df['MSE Test'], errors='coerce')
 
-        pivot_learned = df.pivot(index="Number of Subdomains", columns="Time Limit", values="MSE Learned")
-        pivot_test = df.pivot(index="Number of Subdomains", columns="Time Limit", values="MSE Test")
-        
+        pivot_learned = df.pivot(index="Window Overlap", columns="Time Limit", values="MSE Learned")
+        pivot_test = df.pivot(index="Window Overlap", columns="Time Limit", values="MSE Test")
+
         pivot_learned_log = pivot_learned.map(lambda x: np.log10(x + 1e-10))  # Adding a small number to avoid log(0)
         pivot_test_log = pivot_test.map(lambda x: np.log10(x + 1e-10))
 
@@ -261,7 +261,7 @@ def plot_DDD_number_of_subdomain():
                     f"• {lambda_data_tex}: {lambda_data} " + 
                     f"• Sparse: {sparse} " +
                     f"• Noise: {noise_level} " + "\n"
-                    f"• wo: {wo} " +
+                    f"• nsub: {nsub} " +
                     f"• wi: {wi} " +
                     f"• Problem: {problem.__name__ if hasattr(problem, '__name__') else problem}")
 
@@ -273,33 +273,34 @@ def plot_DDD_number_of_subdomain():
         # heatmaps
         gs_heatmaps = gridspec.GridSpecFromSubplotSpec(1, 2, subplot_spec=gs[1], wspace=0.3) 
 
-        ax1 = fig.add_subplot(gs_heatmaps[0, 0])
-        ax2 = fig.add_subplot(gs_heatmaps[0, 1])
+        ax4 = fig.add_subplot(gs_heatmaps[0, 0])
+        ax5 = fig.add_subplot(gs_heatmaps[0, 1])
 
         def highlight_min(data, ax, highlight_color='red'):
             for col in data.columns:
                 min_row = data[col].idxmin()
                 ax.add_patch(plt.Rectangle((data.columns.tolist().index(col), data.index.tolist().index(min_row)),
                                             1, 1, fill=True, facecolor=highlight_color, alpha=0.5, edgecolor=highlight_color, lw=2))
+
         # Heatmap for MSE 
-        sns.heatmap(pivot_learned_log, annot=True, fmt=".2f", cmap='viridis', ax=ax1)
-        highlight_min(pivot_learned_log, ax1)
-        ax1.set_title('Log MSE Learned')
-        ax1.invert_yaxis()
+        sns.heatmap(pivot_learned_log, annot=True, fmt=".2f", cmap='viridis', ax=ax4)
+        highlight_min(pivot_learned_log, ax4)
+        ax4.set_title('Log MSE Learned')
+        ax4.invert_yaxis()
 
-        sns.heatmap(pivot_test_log, annot=True, fmt=".2f", cmap='viridis', ax=ax2)
-        highlight_min(pivot_test_log, ax2)
-        ax2.set_title('Log MSE Test')
-        ax2.invert_yaxis()
+        sns.heatmap(pivot_test_log, annot=True, fmt=".2f", cmap='viridis', ax=ax5)
+        highlight_min(pivot_test_log, ax5)
+        ax5.set_title('Log MSE Test')
+        ax5.invert_yaxis()
 
-        plt.suptitle('MSE Value by Time Limit and Number of Subdomain', fontsize=14, verticalalignment='top')# , y=0.95)
-        plt.subplots_adjust(hspace=0.5, top=0.88)
+        plt.suptitle('MSE Value by Time Limit and Window Overlaps', fontsize=14, verticalalignment='top')#, y=0.95)
+        plt.subplots_adjust(hspace=0.2, top=0.88)
         plt.tight_layout()
         file_path = f"{rootdir}/summaries/number_of_subdomain_heatmap_with_params.png"
         plt.savefig(file_path)
 
         print("DONE")
 
-        
+
 if __name__=="__main__":
-    plot_DDD_number_of_subdomain()
+    plot_DDD_varying_overlap()
