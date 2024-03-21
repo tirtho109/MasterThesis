@@ -78,15 +78,17 @@ if not os.path.isdir(args.outputpath[0]):
         os.mkdir(args.outputpath[0])
 
 folder_name = (
-        "SGModel_"
+        "SciANN_SG_"
         f"actf_{args.actf[0]}_"
-        f"layers_{'x'.join(map(str, args.layers))}_"
-        f"numx_{args.numx[0]}_"
+        f"l_{'x'.join(map(str, args.layers))}_"
+        f"nD_{args.numx[0]}_"
         f"bs_{args.batchsize[0]}_"
-        f"epochs_{args.epochs[0]}_"
+        f"e_{args.epochs[0]}_"
         f"lr_{args.learningrate[0]}_"
         f"tl_{'-'.join(map(str, args.time_limit))}_"
-        f"nl_{args.noise_level}"
+        f"nl_{args.noise_level}_"
+        f"nC_{args.nCol}_"
+        f"nT_{args.nTest}_"
     )
 output_folder = os.path.join(args.outputpath[0], folder_name)
 
@@ -163,6 +165,11 @@ def train_sg_model():
                    data_c1]
 
     training_time = time.time()
+    save_weights_config = {
+        'path': output_file_name,  
+        'freq': 500,  
+        'best': False  
+        }
     history = model.train(
         x_true=[t_total],
         y_true=target_data,
@@ -171,9 +178,11 @@ def train_sg_model():
         shuffle=args.shuffle[0],
         learning_rate=args.learningrate[0],
         stop_after=args.stopafter[0],
-        verbose=args.verbose[0]
+        verbose=args.verbose[0],
+        save_weights=save_weights_config,
     )
     training_time = time.time() - training_time
+    np.savetxt(output_file_name+"_SciANN_training_time.txt", [training_time])
 
     weights_file_name = output_file_name + "_weights.hdf5"
 
@@ -244,7 +253,9 @@ def plot():
     _, learned_solution = learned_sg_model.solve_ode(args.initial_conditions, t_span=t_span)
     nn_pred_solution = np.loadtxt(output_file_name+"_t_u_pred.csv", delimiter=',', skiprows=1) #model pred
     file_path = os.path.join(output_folder, "metrices.csv")
-    export_mse_mae(true_solution, learned_solution, nn_pred_solution[:,1], file_path=file_path)
+    assert true_solution.shape == learned_solution.shape
+    assert true_solution.shape == nn_pred_solution[:, 1:2].shape
+    export_mse_mae(true_solution, nn_pred_solution[:,1:2], learned_solution, file_path=file_path)
 
     fig, ax = plt.subplots(1, 2, figsize=(7, 4), dpi=300)
     model_comparison(true_sg_model, learned_sg_model, nn_pred_solution, t_span, ax[0])

@@ -48,7 +48,7 @@ parser.add_argument('--stopafter', help='Patience argument from Keras (default 5
 parser.add_argument('--savefreq', help='Frequency to save weights (each n-epoch)', type=int, nargs=1, default=[100000])
 parser.add_argument('--dtype', help='Data type for weights and biases (default float64)', type=str, nargs=1, default=['float64'])
 parser.add_argument('--gpu', help='Use GPU if available (default False)', type=bool, nargs=1, default=[False])
-parser.add_argument('-op', '--outputpath', help='Output path (default ./file_name)', type=str, nargs=1, default=['output'])
+parser.add_argument('-op', '--outputpath', help='Output path (default ./file_name)', type=str, nargs=1, default=['CompModels'])
 parser.add_argument('-of', '--outputprefix', help='Output path (default res**)', type=str, nargs=1, default=['res'])
 
 parser.add_argument('--plot', help='Plot the model', nargs='?', default=False)
@@ -82,7 +82,7 @@ if not os.path.isdir(args.outputpath[0]):
         os.mkdir(args.outputpath[0])
 
 folder_name = (
-    f"CM_{args.model_type[0]}_"
+    f"SciAN_CM_{args.model_type[0]}_"
     f"actf_{args.actf[0]}_"
     f"l_{'x'.join(map(str, args.layers))}_"
     f"nD_{args.numx[0]}_"
@@ -284,11 +284,18 @@ def train_comp_model():
     data_d2 = data_constraints_full_2
     data_c1 = 'zeros'
     data_c2 = 'zeros'
+    cp_index = np.searchsorted(t_total, collocation_points)
     target_data = [(data_index, data_d1),
                (data_index, data_d2),
-               data_c1, data_c2]
+               (cp_index, data_c1), 
+               (cp_index, data_c2)]
 
     training_time = time.time()
+    save_weights_config = {
+        'path': output_file_name,  
+        'freq': 1000,  
+        'best': False  
+        }
     history = model.train(
         x_true=[t_total],
         y_true=target_data,
@@ -298,9 +305,11 @@ def train_comp_model():
         learning_rate=args.learningrate[0],
         reduce_lr_after=args.reduce_learning_rate[0],
         stop_after=args.stopafter[0],
-        verbose=args.verbose[0]
+        verbose=args.verbose[0],
+        save_weights=save_weights_config,
     )
     training_time = time.time() - training_time
+    np.savetxt(output_file_name+"_SciANN_training_time.txt", [training_time])
 
     weights_file_name = output_file_name + "_weights.hdf5"
 
@@ -387,7 +396,10 @@ def plot():
     _, learned_solution = learned_comp_model.solve_ode(args.initial_conditions, t_span)
     nn_pred_solution = np.loadtxt(output_file_name+"_t_u_v_pred.csv", delimiter=', ', skiprows=1)
     file_path = os.path.join(output_folder, "metrices.csv")
-    export_mse_mae(true_solution, learned_solution, nn_pred_solution[:,1:2], file_path=file_path)
+    print(true_solution.shape, learned_solution.shape, nn_pred_solution[:,1:3].shape)
+    assert true_solution.shape == learned_solution.shape
+    assert true_solution.shape == nn_pred_solution[:, 1:3].shape
+    export_mse_mae(true_solution, nn_pred_solution[:,1:3], learned_solution, file_path=file_path)
 
     fig, ax = plt.subplots(1, 2, figsize=(7, 4), dpi=300)
     model_comparison(true_comp_model, learned_comp_model, nn_pred_solution, t_span, ax[0])
