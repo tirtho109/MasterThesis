@@ -93,6 +93,9 @@ class Constants(ConstantsBase):
         # other constants
         self.hostname = socket.gethostname().lower()
 
+        # skip plot at 0
+        self.skip_plot_at_first = False
+
         # overwrite with input arguments
         for key in kwargs.keys(): self[key] = kwargs[key]# invokes __setitem__ in ConstantsBase
 

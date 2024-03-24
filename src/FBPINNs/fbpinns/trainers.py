@@ -764,11 +764,19 @@ class FBPINNTrainer(_Trainer):
         writer.add_scalar("loss/test/l1_istep", l1, i)
 
         # create figures
-        if i % (c.test_freq * 5) == 0:
-            fs = plot_trainer.plot("FBPINN", all_params["static"]["problem"]["dims"],
-                x_batch_test, u_exact, u_test, us_test, ws_test, us_raw_test, x_batch, all_params, i, active, decomposition, n_test)
-            if fs is not None:
-                self._save_figs(i, fs)
+        # if i % (c.test_freq * 5) == 0:
+        if c.skip_plot_at_first:
+            if i != 0 and i % (c.test_freq * 5) == 0:
+                fs = plot_trainer.plot("FBPINN", all_params["static"]["problem"]["dims"],
+                    x_batch_test, u_exact, u_test, us_test, ws_test, us_raw_test, x_batch, all_params, i, active, decomposition, n_test)
+                if fs is not None:
+                    self._save_figs(i, fs)
+        else:
+            if i % (c.test_freq * 5) == 0:
+                fs = plot_trainer.plot("FBPINN", all_params["static"]["problem"]["dims"],
+                    x_batch_test, u_exact, u_test, us_test, ws_test, us_raw_test, x_batch, all_params, i, active, decomposition, n_test)
+                if fs is not None:
+                    self._save_figs(i, fs)
 
         return u_test_losses
 
@@ -934,11 +942,18 @@ class PINNTrainer(_Trainer):
         writer.add_scalar("loss/test/l1_istep", l1, i)
 
         # create figures
-        if i % (c.test_freq * 5) == 0:
-            fs = plot_trainer.plot("PINN", all_params["static"]["problem"]["dims"],
-                x_batch_test, u_exact, u_test, u_raw_test, x_batch, all_params, i, n_test)
-            if fs is not None:
-                self._save_figs(i, fs)
+        if c.skip_plot_at_first:
+            if i != 0 and i % (c.test_freq * 5) == 0:
+                fs = plot_trainer.plot("PINN", all_params["static"]["problem"]["dims"],
+                    x_batch_test, u_exact, u_test, u_raw_test, x_batch, all_params, i, n_test)
+                if fs is not None:
+                    self._save_figs(i, fs)
+        else:
+            if i % (c.test_freq * 5) == 0:
+                fs = plot_trainer.plot("PINN", all_params["static"]["problem"]["dims"],
+                    x_batch_test, u_exact, u_test, u_raw_test, x_batch, all_params, i, n_test)
+                if fs is not None:
+                    self._save_figs(i, fs)
 
         return u_test_losses
 
