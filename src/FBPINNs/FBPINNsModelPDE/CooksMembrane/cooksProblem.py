@@ -374,6 +374,182 @@ class CooksProblemForwardHard(Problem):
         noise = noise_scale * jax.random.normal(key, (x_batch.shape[0],all_params["static"]["problem"]["dims"][0]))
         
         return noise
+    
+
+#################################################################################
+##################### Hard Boundary Condition (2nd option)#######################
+#################################################################################
+
+    
+# We will apply Hard Boundary condition:
+class CooksProblemForwardHardVersion2(Problem):
+    """ Linear Elasticity, plain strain, DBC at left, NBC at right"""
+    @staticmethod
+    def init_params(lambda_true= 4, mu_true = 5, 
+                    nbc_points_right = 10, nbc_points_top=10, 
+                    nbc_points_bottom=10, dbc_points_left=10, sd=0.1):
+        
+        E = lambda_true * jnp.einsum("ij, kl->ijkl", jnp.eye(2), jnp.eye(2)) + mu_true *(
+                jnp.einsum("ik, jl->ijkl", jnp.eye(2), jnp.eye(2)) + jnp.einsum("il, jk->ijkl", jnp.eye(2), jnp.eye(2))
+            )
+        static_params = {
+            "dims":(5,2), # Out: ux, uy,sigma_xx, sigma_yy, sigma_xy[symmetric], in: (x,y)
+            "E":E,
+            "nbc_points_right":nbc_points_right,
+            "nbc_points_top":nbc_points_top,
+            "nbc_points_bottom":nbc_points_bottom,
+            "dbc_points_left":dbc_points_left,
+            "sd":sd,
+            "lambda_true":lambda_true,
+            "mu_true":mu_true,
+        }
+        return static_params, {}
+    
+    @staticmethod
+    def sample_constraints(all_params, domain, key, sampler, batch_shapes):
+        # Physics Loss
+        x_batch_phys = domain.sample_interior(all_params, key, sampler, batch_shapes[0])
+
+        nbc_points_right = all_params["static"]["problem"]["nbc_points_right"]
+        nbc_points_top = all_params["static"]["problem"]["nbc_points_top"]
+        nbc_points_bottom = all_params["static"]["problem"]["nbc_points_bottom"]
+        dbc_points_left = all_params["static"]["problem"]["dbc_points_left"]
+        batch_shapes = ((nbc_points_bottom,),(nbc_points_top,),(dbc_points_left,),(nbc_points_right,)) # bottom, top, left, right
+
+        x_boundaries = domain.sample_boundaries(all_params, key, sampler, batch_shapes)
+        x_batch = jnp.vstack([x_batch_phys] + x_boundaries)
+        assert x_batch.shape[0] == x_batch_phys.shape[0]+nbc_points_bottom+nbc_points_right+nbc_points_top+dbc_points_left
+        assert x_batch.shape[1] == 2
+        required_ujs_phys = (   # we need: ux,x; uy,y; ux,y; uy,x; sigma_xx,x; sigma_yy,y; sigma_xy,x; sigma_xy,y; sigma_xx; sigma_yy; sigma_xy
+            (0, (0,)),      # ux,x (out_idx, (in_idx, in_idx))
+            (1, (1,)),      # uy,y
+            (0, (1,)),      # ux, y
+            (1, (0,)),      # uy, x
+            (2, (0,)),      # sigma_xx,x
+            (3, (1,)),      # sigma_yy,y;
+            (4, (0,)),      # sigma_xy,x; 
+            (4, (1,)),      # sigma_xy,y
+            (2,()),         # sigma_xx
+            (3,()),         # sigma_yy
+            (4,()),         # sigma_xy or sigma_yx
+        )
+
+        return [[x_batch, required_ujs_phys]]
+    
+    
+    @staticmethod
+    def constraining_fn(all_params, x_batch, solution):
+        """
+            u_pinn^tilda(x) = G(x) + D(x) * u_pinn(x)
+            sigma_pinn^tilda(x) = G_sigma + D_sigma(x) * sigma_pinn(x)
+        """
+        sd = all_params["static"]["problem"]["sd"]
+        x, y, tanh = x_batch[:,0:1], x_batch[:,1:2], jnp.tanh
+
+        sigmaxx, sigmayy, sigmaxy = solution[:,2:3], solution[:, 3:4], solution[:,4:5]
+
+        # Hard BC on displacement
+        u = solution[:, 0:1] * x + 0.0 # Hard constraining (DBC, ux=0, at x=0) 
+        v = solution[:, 1:2] * x + 0.0 # DBC, uy=0, at x=0
+
+        # Hard BC on stress
+        tolerence = 1e-8
+        G_sigmaxx = 0.0         # Boundary Extension
+        D_sigmaxx = 0.048 - x   # Distance Function
+        sigmaxx = G_sigmaxx +  D_sigmaxx * sigmaxx
+        G_sigmaxy = 1   # [traction at the right boundary = [0,1]]
+        D_sigmaxy = 0.048 - x 
+        sigmaxy = G_sigmaxy + D_sigmaxy * sigmaxy
+
+
+        # top NBC: Traction=[0,0]
+        n_top = jnp.array([-0.3162279,  0.9486832])  
+        m_top = (0.06 -0.044) / (0.048 -0)
+        b_top = 0.044                       # Create the line
+        y_on_the_top = (jnp.abs(y-(m_top * x + b_top)) < tolerence) & (x>0) & (x<0.048)
+        updated_sigmaxx = -sigmaxy * (n_top[1]/n_top[0])
+        updated_sigmaxy = -sigmayy * (n_top[1]/n_top[0])
+        sigmaxx = jnp.where(y_on_the_top, updated_sigmaxx, sigmaxx)
+        sigmaxy = jnp.where(y_on_the_top, updated_sigmaxy, sigmaxy)
+
+        # bottom NBC: Traction=[0,0]
+        n_bottom = jnp.array([ 0.67572457, -0.7371541]) 
+        m_bottom = (0.044 - 0) / (0.048 -0)
+        b_bottom = 0.0
+        y_on_the_bottom = (jnp.abs(y-(m_bottom * x + b_bottom)) < tolerence) & (x>0) & (x<0.048)
+        updated_sigmaxx = -sigmaxy * (n_bottom[1]/n_bottom[0])
+        updated_sigmaxy = -sigmayy * (n_bottom[1]/n_bottom[0])
+        sigmaxx = jnp.where(y_on_the_bottom, updated_sigmaxx, sigmaxx)
+        sigmaxy = jnp.where(y_on_the_bottom, updated_sigmaxy, sigmaxy)
+
+        return jnp.concatenate([u, v, sigmaxx, sigmayy, sigmaxy], axis=1)
+    
+    @staticmethod
+    def shape_symmetric_gradient(ux, uy, vx, vy):
+        return jnp.array([[ux, 0.5*(uy + vx)], [0.5*(uy + vx), vy]])
+
+    
+    @staticmethod
+    def batched_shape_symmetric_gradient(ux_x, ux_y, uy_x, uy_y):
+
+        # Flatten
+        ux_x_flat = ux_x.ravel()
+        ux_y_flat = ux_y.ravel()
+        uy_y_flat = uy_y.ravel()
+        uy_x_flat = uy_x.ravel()
+
+        # Vectorize
+        v_shape_symmetric_gradient = vmap(CooksProblemForwardSoft.shape_symmetric_gradient, in_axes=(0, 0, 0, 0), out_axes=0)
+
+        # Apply the vectorized function 
+        epsilon_batch = v_shape_symmetric_gradient(ux_x_flat, ux_y_flat, uy_x_flat, uy_y_flat)
+
+        return epsilon_batch
+
+    @staticmethod
+    def loss_fn(all_params, constraints):
+        #TODO : Recheck the loss terms 
+        E = all_params["static"]["problem"]["E"]
+        # nu = all_params["static"]["problem"]["nu"]
+        
+        _, ux_x, uy_y, ux_y, uy_x, sigmaxx_x, sigmayy_y, sigmaxy_x, sigmaxy_y, sigmaxx, sigmayy, sigmaxy= constraints[0]
+        # Material Model
+        """
+        MM Loss:
+        (1) σ₁₁ - Ε₁₁ₖₗ ϵₖₗ = 0
+        (2) σ₁₂ - σ₂₁ = Ε₁₂ₖₗ ϵₖₗ = 0
+        (3) σ₂₂ - Ε₂₂ₖₗ ϵₖₗ  = 0
+        Alternative:
+        σ_xx = (E /((1+ν)(1-2ν)) * [(1-ν)ϵ_xx + νϵ_yy]
+        σ_yy = (E /((1+ν)(1-2ν)) * [νϵ_xx + (1-ν)ϵ_yy]
+        σ_xy = (E / 2(1+ν)) * ϵ_xy  #TODO check 2*(1+ν) or (1+ν)???
+        """
+        epsilon_batch = CooksProblemForwardSoft.batched_shape_symmetric_gradient(ux_x, ux_y, uy_x, uy_y)
+        stress_batch = jnp.einsum("ijkl, akl->aij", E, epsilon_batch)
+        MM_loss = (jnp.mean((sigmaxx - stress_batch[:, 0, 0])**2) + # sigmaxx - sigmaxx (E \boxdot epsilon)
+                        jnp.mean((sigmayy - stress_batch[:, 1, 1])**2) + # sigmayy - sigmayy (E \boxdot epsilon)
+                        jnp.mean((sigmaxy - stress_batch[:, 0, 1])**2)) # sigmaxy - sigmaxy (E \boxdot epsilon). stress_batch[:, 1, 0] == stress_batch[:, 0, 1] [symmetric stress]
+        
+        # Balance
+        """
+        Balance Loss
+        (1) σ₁₁,₁ + σ₁₂,₂ = 0
+        (2) σ₂₁,₁ + σ₂₂,₂ = 0           # Note: σ₁₂ == σ₂₁ (symmetric)
+        """
+        Balance_loss =  jnp.mean((sigmaxx_x + sigmaxy_y)**2) + jnp.mean((sigmayy_y + sigmaxy_x)**2)
+        phy_loss = MM_loss + Balance_loss
+
+        return phy_loss
+
+    @staticmethod 
+    def exact_solution(all_params, x_batch, batch_shape=None):
+        """For now, exact solution(numerical solution) is not added, which will be added later on from the julia FEM code""" #TODO
+        noise_scale = 1e-6
+        key = jax.random.PRNGKey(0) 
+
+        noise = noise_scale * jax.random.normal(key, (x_batch.shape[0],all_params["static"]["problem"]["dims"][0]))
+        
+        return noise
 
     
 if __name__=="__main__":
