@@ -285,8 +285,8 @@ class CooksProblemForwardHard(Problem):
     @staticmethod
     def constraining_fn(all_params, x_batch, solution):
         """
-            u_pinn^tilda(x) = G(x) + D(x) \dot u_pinn(x)
-            sigma_pinn^tilda(x) = G_sigma + D_sigma(x) \dot sigma_pinn(x)
+            u_pinn^tilda(x) = G(x) + D(x) * u_pinn(x)
+            sigma_pinn^tilda(x) = G_sigma + D_sigma(x) * sigma_pinn(x)
         """
         sd = all_params["static"]["problem"]["sd"]
         x, y, tanh = x_batch[:,0:1], x_batch[:,1:2], jnp.tanh
@@ -312,16 +312,20 @@ class CooksProblemForwardHard(Problem):
         m_top = (0.06 -0.044) / (0.048 -0)
         b_top = 0.044                       # Create the line
         y_on_the_top = (jnp.abs(y-(m_top * x + b_top)) < tolerence) & (x>0) & (x<0.048)
-        sigmaxx = jnp.where(y_on_the_top, -sigmaxy*(n_top[1]/n_top[0]), sigmaxx)
-        sigmaxy = jnp.where(y_on_the_top, -sigmayy*(n_top[1]/n_top[0]), sigmaxy)
+        updated_sigmaxx = -sigmaxy * (n_top[1]/n_top[0])
+        updated_sigmaxy = -sigmayy * (n_top[1]/n_top[0])
+        sigmaxx = jnp.where(y_on_the_top, updated_sigmaxx, sigmaxx)
+        sigmaxy = jnp.where(y_on_the_top, updated_sigmaxy, sigmaxy)
 
         # bottom NBC: Traction=[0,0]
         n_bottom = jnp.array([ 0.67572457, -0.7371541]) 
         m_bottom = (0.044 - 0) / (0.048 -0)
         b_bottom = 0.0
         y_on_the_bottom = (jnp.abs(y-(m_bottom * x + b_bottom)) < tolerence) & (x>0) & (x<0.048)
-        sigmaxx = jnp.where(y_on_the_bottom, -sigmaxy*(n_bottom[1]/n_bottom[0]), sigmaxx)
-        sigmaxy = jnp.where(y_on_the_bottom, -sigmayy*(n_bottom[1]/n_bottom[0]), sigmaxy)
+        updated_sigmaxx = -sigmaxy * (n_bottom[1]/n_bottom[0])
+        updated_sigmaxy = -sigmayy * (n_bottom[1]/n_bottom[0])
+        sigmaxx = jnp.where(y_on_the_bottom, updated_sigmaxx, sigmaxx)
+        sigmaxy = jnp.where(y_on_the_bottom, updated_sigmaxy, sigmaxy)
 
         return jnp.concatenate([u, v, sigmaxx, sigmayy, sigmaxy], axis=1)
 
@@ -349,7 +353,7 @@ class CooksProblemForwardHard(Problem):
         MMx = (E / ( (1+nu) * (1-2*nu) )) * ( (1-nu) * epsilon_x + nu * epsilon_y )
         MMy = (E / ( (1+nu) * (1-2*nu) )) * ( nu*epsilon_x + (1-nu) * epsilon_y )
         MMxy = (E / (2*(1+nu)) ) *  epsilon_xy    #TODO check multiplicity of 2*(1-nu)
-        MM_loss = (jnp.mean(MMx**2) + jnp.mean(MMy**2) + jnp.mean(MMxy**2))
+        MM_loss = (jnp.mean((sigmaxx - MMx)**2) + jnp.mean((sigmayy - MMy)**2) + jnp.mean((sigmaxy - MMxy)**2))
         # Balance
         """
         Balance Loss
