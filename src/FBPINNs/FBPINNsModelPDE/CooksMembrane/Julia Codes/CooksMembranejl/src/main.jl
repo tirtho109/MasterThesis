@@ -9,8 +9,8 @@ include("FeFunctions.jl")
 μm = 5
 mp = LinearElasticity(λm, μm)
 
-nx = 10
-ny = 10
+nx = 100
+ny = 100
 
 grid = create_mesh(nx, ny)
 
@@ -77,7 +77,7 @@ apply!(u, ch)
 # postprocessing
 σ_vm = calculate_stress(grid, dh, cv, u, mp)
 
-vtk_grid("assignment1", dh) do vtk
+vtk_grid("assignment$(nx)_$(ny)", dh) do vtk
     # Export the solution using the DofHandler dh and solution u
     vtk_point_data(vtk, dh, u)
     # Export the von von_misses_stress
