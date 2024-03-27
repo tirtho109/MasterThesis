@@ -10,7 +10,7 @@ def plot_deformation(deformation, coordinates, ax=None, set_title=None, point_si
     created_ax = False
 
     if ax is None:
-        fig, ax = plt.subplots(figsize=(4, 3)) 
+        fig, ax = plt.subplots(figsize=(7,6)) 
         created_ax = True
     else:
         fig = ax.figure 
