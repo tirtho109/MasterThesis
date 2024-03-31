@@ -8,6 +8,7 @@ import sys
 import pandas as pd
 from scipy.integrate import odeint
 from scipy.interpolate import interp1d
+from scipy.interpolate import griddata
 import plotly.graph_objects as go
 import plotly.io as pio
 
@@ -296,3 +297,65 @@ def export_mse_mae(u_exact, u_test, u_learned, file_path=None):
         metrics_df.to_csv(file_path, index=False)
     else:
         metrics_df.to_csv('metrics.csv', index=False)
+
+def plot_loss_landscape3D(file_path, ax=None):
+    if ax is None:
+        fig = plt.figure(figsize=(10, 8))
+        ax = fig.add_subplot(111, projection='3d')
+        own_figure = True
+    else:
+        fig = ax.figure
+        own_figure = False
+
+    df = pd.read_csv(file_path, header=None)
+    x = df[0]
+    y = df[1]
+    z = df[2]
+
+    resolution = int(np.sqrt(len(z)))
+    X = x.values.reshape((resolution, resolution))
+    Y = y.values.reshape((resolution, resolution))
+    Z = z.values.reshape((resolution, resolution))
+
+    surf = ax.plot_surface(X, Y, Z, cmap='viridis', edgecolor='none')
+    ax.set_title('3D Plot')
+    ax.set_xlabel('Direction 1')
+    ax.set_ylabel('Direction 2')
+    ax.set_zlabel('Loss', labelpad=10)
+    ax.zaxis.set_rotate_label(False)  
+    ax.zaxis.label.set_rotation(90)
+    fig.colorbar(surf, ax=ax, shrink=1, pad=0.1, location='left')
+
+    if own_figure:
+        plt.show()
+    
+    return ax
+
+def plot_loss_landscape_contour(file_path, ax=None):
+    if ax is None:
+        fig, ax = plt.subplots()
+        own_figure = True
+    else:
+        fig = ax.figure 
+        own_figure = False
+
+    df = pd.read_csv(file_path, header=None)
+    x, y, z = df[0].values, df[1].values, df[2].values
+
+    xi = np.linspace(x.min(), x.max(), 100)
+    yi = np.linspace(y.min(), y.max(), 100)
+    X,Y = np.meshgrid(xi,yi)
+    Z = griddata((x,y), z, (X,Y), method='cubic')
+
+    contour = plt.contour(X, Y, Z, levels=np.linspace(z.min(), z.max(), 100), cmap=plt.cm.viridis)
+    fig.colorbar(contour, ax=ax, shrink=1, aspect=14)
+    ax.set_title('Contour Plot')
+    ax.set_xlabel('Direction 1')
+    ax.set_ylabel('Direction 2')
+    plt.setp(ax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor")
+
+    if own_figure:
+        plt.show()
+    return ax
+
+

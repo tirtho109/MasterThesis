@@ -8,6 +8,7 @@ from sciann import Data, Tie
 from sciann import Variable, Field
 
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 import argparse
 from model_ode_solver import *
 
@@ -170,6 +171,12 @@ def train_sg_model():
         'freq': 500,  
         'best': False  
         }
+    log_loss_landscape_config = {
+        'norm': 2,  # L2 norm
+        'resolution': 40,  
+        'path': output_folder, 
+        'trials': 1 
+    }
     history = model.train(
         x_true=[t_total],
         y_true=target_data,
@@ -180,6 +187,7 @@ def train_sg_model():
         stop_after=args.stopafter[0],
         verbose=args.verbose[0],
         save_weights=save_weights_config,
+        log_loss_landscape=log_loss_landscape_config,
     )
     training_time = time.time() - training_time
     np.savetxt(output_file_name+"_SciANN_training_time.txt", [training_time])
@@ -264,6 +272,17 @@ def plot():
     ax[1].text(0.5, 0.5, network_description, ha='center', va='center', fontsize='small')
     plt.subplots_adjust(wspace=0.1)
     plt.savefig(f"{output_file_name}__model_comparison.png")
+
+    # plot loss_landscape
+    file_path = output_folder + "\loss-landscape-history-landscape.csv"
+    fig = plt.figure(figsize=(12, 4), dpi=300) 
+    ax1 = fig.add_subplot(1, 2, 1, projection='3d') 
+    ax2 = fig.add_subplot(1, 2, 2)
+    plot_loss_landscape3D(file_path, ax1)
+    plot_loss_landscape_contour(file_path, ax2)
+    fig.suptitle("Loss Landscape", fontsize=16, fontweight='bold')
+    plt.subplots_adjust(wspace=0.5) 
+    plt.savefig(f"{output_file_name}__loss_landscape_viz.png", bbox_inches='tight') 
 
 if __name__=="__main__":
     if args.plot==False:

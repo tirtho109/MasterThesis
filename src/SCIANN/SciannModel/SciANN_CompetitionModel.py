@@ -82,7 +82,7 @@ if not os.path.isdir(args.outputpath[0]):
         os.mkdir(args.outputpath[0])
 
 folder_name = (
-    f"SciAN_CM_{args.model_type[0]}_"
+    f"SciANN_CM_{args.model_type[0]}_"
     f"actf_{args.actf[0]}_"
     f"l_{'x'.join(map(str, args.layers))}_"
     f"nD_{args.numx[0]}_"
@@ -296,6 +296,12 @@ def train_comp_model():
         'freq': 1000,  
         'best': False  
         }
+    log_loss_landscape_config = {
+        'norm': 2,  # L2 norm
+        'resolution': 40, 
+        'path': output_folder, 
+        'trials': 1  
+    }
     history = model.train(
         x_true=[t_total],
         y_true=target_data,
@@ -307,6 +313,7 @@ def train_comp_model():
         stop_after=args.stopafter[0],
         verbose=args.verbose[0],
         save_weights=save_weights_config,
+        log_loss_landscape=log_loss_landscape_config,
     )
     training_time = time.time() - training_time
     np.savetxt(output_file_name+"_SciANN_training_time.txt", [training_time])
@@ -468,6 +475,18 @@ def plot():
 
     fig.suptitle("Phase Plot")
     plt.savefig(f"{output_file_name}__Trajectories.png")
+
+    # plot loss_landscape
+    file_path = output_folder + "\loss-landscape-history-landscape.csv"
+    fig = plt.figure(figsize=(12, 4), dpi=300) 
+    ax1 = fig.add_subplot(1, 2, 1, projection='3d') 
+    ax2 = fig.add_subplot(1, 2, 2)
+    plot_loss_landscape3D(file_path, ax1)
+    plot_loss_landscape_contour(file_path, ax2)
+    fig.suptitle("Loss Landscape", fontsize=16, fontweight='bold')
+    plt.subplots_adjust(wspace=0.5) 
+    plt.savefig(f"{output_file_name}__loss_landscape_viz.png", bbox_inches='tight') 
+
 
 if __name__=="__main__":
     if args.plot==False:
