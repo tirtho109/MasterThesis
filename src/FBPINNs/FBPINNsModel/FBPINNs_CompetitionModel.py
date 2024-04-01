@@ -10,15 +10,16 @@ if module_path not in sys.path:
 import numpy as np
 import argparse
 from fbpinns.domains import RectangularDomainND
-from problems import CompetitionModel
+from FBPINNsModel.problems import CompetitionModel
 from fbpinns.decompositions import RectangularDecompositionND
 from fbpinns.networks import FCN
 from fbpinns.constants import Constants
 from fbpinns.trainers import FBPINNTrainer, PINNTrainer
 from fbpinns.analysis import load_model
 import matplotlib.pyplot as plt
-from plot import plot_model_comparison, get_us, export_mse_mae, export_parameters, export_energy_plot
-from subdomain_helper import get_subdomain_xsws
+from FBPINNsModel.plot import plot_model_comparison, get_us, export_mse_mae, export_parameters, export_energy_plot, plot_loss_landscape3D, plot_loss_landscape_contour
+from FBPINNsModel.subdomain_helper import get_subdomain_xsws
+from FBPINNsModel.FBPINNs_loss_landscape import _loss_lanscape
 
 def get_parser():
     # Input interface for python. 
@@ -52,7 +53,8 @@ def get_parser():
 
     parser.add_argument('--rootdir', type=str, default='CompModels', help='Root directory for saving models and summaries (default: "CompModels")')
     parser.add_argument('--tag', type=str, default='ablation', help='Tag for identifying the run (default: "ablation")')
-    parser.add_argument('--sparse', help='Sparsity of training data (default True)', type=bool, nargs=1, default=[False])
+    parser.add_argument('--sparse', help='Sparsity of training data (default False)', type=bool, nargs=1, default=[False])
+    parser.add_argument('--loss_landscape', help='Whether to plot loss_landscape for FBPINNs (default False)', type=bool, nargs=1, default=[False])
     parser.add_argument('-nl','--noise_level', help='Noise level in training data (default 0.005)', type=float, default=0.005)   
     parser.add_argument('-pt','--pinn_trainer', help='Whether to train PINN trainer (default Faöse)', type=bool, nargs=1, default=[False])
 
@@ -155,6 +157,21 @@ def train_comp_model():
     file_path = os.path.join(c.summary_out_dir, "FBPINNs_training_time.txt")
     with open(file_path, 'w') as file:
         file.write(str(training_time))
+
+    if args.loss_landscape[0]:
+        # export _loss_landscape
+        _loss_lanscape(FBPINNrun, run, rootdir=args.rootdir+"/", resolution=20, norm=2, path=c.summary_out_dir)
+        # plot loss_landscape
+        csv_path = c.summary_out_dir + "/loss-landscape.csv"
+        fig = plt.figure(figsize=(12, 4), dpi=300) 
+        ax1 = fig.add_subplot(1, 2, 1, projection='3d') 
+        ax2 = fig.add_subplot(1, 2, 2)
+        plot_loss_landscape3D(csv_path, ax1)
+        plot_loss_landscape_contour(csv_path, ax2)
+        fig.suptitle("Loss Landscape", fontsize=16, fontweight='bold')
+        plt.subplots_adjust(wspace=0.5) 
+        file_path = os.path.join(c.summary_out_dir, "loss_landscape_viz.png")
+        plt.savefig(file_path, bbox_inches='tight') 
 
     # import model
     c_out, model = load_model(run, rootdir=args.rootdir+"/")

@@ -11,6 +11,8 @@ import numpy as np
 from fbpinns.decompositions import RectangularDecompositionND
 
 def  get_subdomain_xsws(time_limit=[0,24], t_begin=0, t_end=24, num_subdomain=2, ww=1.1, w_noDataRegion=1.1):
+    if not isinstance(time_limit, (list, tuple)) or len(time_limit) != 2:
+        raise ValueError(f"Invalid time_limit format: {time_limit}")
     data_start, data_end = time_limit
     subdomains = []
     centers = []
@@ -45,6 +47,16 @@ def  get_subdomain_xsws(time_limit=[0,24], t_begin=0, t_end=24, num_subdomain=2,
     subdomain_ws = [np.array([np.diff(sub)* (ww if time_limit[0] <= cen <= time_limit[1] else w_noDataRegion) for cen, sub in sorted(zip(centers, subdomains))]).flatten()]
 
     return subdomain_xs, subdomain_ws
+
+def get_subdomain_xs_uniform_center(tbegin, tend, nsub):
+    centers = []
+    each_subdomain_length = (tend - tbegin)/nsub
+    for i in range(nsub):
+        start = tbegin + i * each_subdomain_length
+        end = start + each_subdomain_length
+        centers.append((start+end)/2)
+    subdomain_xs = [np.array(centers)]
+    return subdomain_xs
 
 
 if __name__=="__main__":
