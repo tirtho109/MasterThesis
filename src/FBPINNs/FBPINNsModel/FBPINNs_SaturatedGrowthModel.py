@@ -40,7 +40,7 @@ def get_parser():
     parser.add_argument('--unnorm_mean', help='Mean for unnormalization (default 0.)', type=float, default=0.)
     parser.add_argument('--unnorm_sd', help='Standard deviation for unnormalization (default 1.)', type=float, default=1.)
 
-    parser.add_argument('-l', '--layers', help='Num layers and neurons (default 2 layers [1, 32, 1])', type=int, nargs='+', default=[1, 32, 1])
+    parser.add_argument('-l', '--layers', help='Num layers and neurons (default 2 layers [1, 5, 5, 5, 1])', type=int, nargs='+', default=[1, 5, 5, 5, 1])
     parser.add_argument('-pl', '--pinns_layers', help='Num of pinns layers and neurons (default 3 layers [1, 5, 5, 5, 1])', type=int, nargs='+', default=[1, 5, 5, 5, 1])
     parser.add_argument('-lp','--lambda_phy', help='Weight for physics loss (default 1e0)', type=float, default=1e0)
     parser.add_argument('-ld','--lambda_data', help='Weight for data loss (default 1e6)', type=float, default=1e6)
