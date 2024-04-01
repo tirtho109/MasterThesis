@@ -5,6 +5,7 @@ import jax.numpy as jnp
 import numpy as np
 from fbpinns.trainers import FBPINNTrainer
 from fbpinns.analysis import load_model
+from copy import deepcopy
 
 def get_loss(fbpinn_trainer, c, all_params, active, all_opt_states, i):
     key = random.PRNGKey(c.seed)
@@ -124,10 +125,11 @@ def _loss_lanscape(fbpinn_trainer, run, rootdir, resolution = 20, norm=2, path=N
     # final model
     c, model = load_model(run=run, rootdir=rootdir)
     i, all_params, active, all_opt_states = model[0], model[1], model[3], model[2]
-    on_epoch_end(fbpinn_trainer, c, all_params, active, all_opt_states, i, _weight_norm, _loss_value, logs={})
+    copied_params = deepcopy(all_params)
+    on_epoch_end(fbpinn_trainer, c, copied_params, active, all_opt_states, i, _weight_norm, _loss_value, logs={})
 
     # export loss_lanscape
-    on_train_end(fbpinn_trainer, c, all_params, active, all_opt_states, i, _weight_norm, resolution, path)
+    on_train_end(fbpinn_trainer, c, copied_params, active, all_opt_states, i, _weight_norm, resolution, path)
 
 
 
