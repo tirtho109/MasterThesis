@@ -31,7 +31,7 @@ parser.add_argument('-in', '--independent_networks', help='Use independent netwo
 parser.add_argument('-v', '--verbose', help='Show training progress (default 2) (check Keras.fit)', type=int, nargs=1, default=[2])
 
 # model parameters
-parser.add_argument('-ic', '--initial_conditions', help='Initial conditions(u0,v0) for the model (default [2,1])', type=float, default=[2,1])
+parser.add_argument('-ic', '--initial_conditions', help='Initial conditions(u0,v0) for the model (default [2,1])', type=float, nargs=2, default=[2,1])
 parser.add_argument('--tend', help='End time for the model simulation (default 24)', type=int, default=24)
 parser.add_argument('--sd', help='sd (default 0.1)', type=float, default=0.1)
 parser.add_argument('--model_type', help='Survival or co-existence model (default survival**)', type=str, nargs=1, default=['survival'])
