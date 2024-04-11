@@ -168,8 +168,8 @@ def train_sg_model():
     training_time = time.time()
     save_weights_config = {
         'path': output_file_name,  
-        'freq': 500,  
-        'best': False  
+        #'freq': 500,  
+        'best': True  
         }
     log_loss_landscape_config = {
         'norm': 2,  # L2 norm
@@ -183,8 +183,8 @@ def train_sg_model():
         epochs=args.epochs[0],
         batch_size=args.batchsize[0],
         shuffle=args.shuffle[0],
-        learning_rate=args.learningrate[0],
-        stop_after=args.stopafter[0],
+        # learning_rate=args.learningrate[0],
+        # stop_after=args.stopafter[0],
         verbose=args.verbose[0],
         save_weights=save_weights_config,
         log_loss_landscape=log_loss_landscape_config,

@@ -4,14 +4,17 @@
 This Python script, `SciANN-SaturatedGrowth.py`, trains a Saturated Growth Model using SciANN. It's designed for experimenting with neural network configurations in solving differential equations.
 
 ## Prerequisites
-- python==3.7
 - numpy==1.21.6
 - sciann==0.7.0.1
 - matplotlib==3.5.3
-- scipy==1.7.3
+- scipy==1.10.1
 - pandas==1.3.5
 - plotly==5.18.0
 - tensorflow==2.11.0
+- ipykernel==6.29.3 
+- ipywidgets==8.1.2 
+- h5py==3.10.0 
+- seaborn==0.13.2
 
 ## Features
 - Configurable neural network architecture.
@@ -22,7 +25,7 @@ This Python script, `SciANN-SaturatedGrowth.py`, trains a Saturated Growth Model
 ## Usage
 Execute with:
 ```bash
-python SciANN-SaturatedGrowth.py
+python SciANN_SaturatedGrowth.py
 ```
 ### Additional Arguments
 - `-l`, `--layers`: Number of layers and neurons per layer. Default: `[5, 5, 5]`.

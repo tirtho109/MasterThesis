@@ -293,8 +293,8 @@ def train_comp_model():
     training_time = time.time()
     save_weights_config = {
         'path': output_file_name,  
-        'freq': 1000,  
-        'best': False  
+        #'freq': 1000,  
+        'best': True  
         }
     log_loss_landscape_config = {
         'norm': 2,  # L2 norm
@@ -309,8 +309,8 @@ def train_comp_model():
         batch_size=args.batchsize[0],
         shuffle=args.shuffle[0],
         learning_rate=args.learningrate[0],
-        reduce_lr_after=args.reduce_learning_rate[0],
-        stop_after=args.stopafter[0],
+        # reduce_lr_after=args.reduce_learning_rate[0],
+        # stop_after=args.stopafter[0],
         verbose=args.verbose[0],
         save_weights=save_weights_config,
         log_loss_landscape=log_loss_landscape_config,
