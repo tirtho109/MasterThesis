@@ -72,7 +72,7 @@ def plot_DDD_varying_overlap():
     params_type = [1,  [0.5, 0.7, 0.3, 0.3, 0.6], [0.5, 0.3, 0.6, 0.7, 0.3]] # sg, coexistence, survival
     cases = ["sg", "coexistence", "survival"]
 
-    parentdir = "DDD_woVswi[1.001, 1.01]"
+    parentdir = "DDD_woVswi"
     rootdirs = ["DDD_woVswi_sg", "DDD_woVswi_coexistence", "DDD_woVswi_survival"]
     rootdirs_with_parent = [os.path.join(parentdir, rd) for rd in rootdirs]
 
