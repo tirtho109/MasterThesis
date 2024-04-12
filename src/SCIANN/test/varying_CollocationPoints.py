@@ -1,11 +1,10 @@
 """
-    To train: python varying_noise.py --train True -e 50000 --gpu True
-    To plot: python varying_noise.py -e 50000 --gpu True
+    To train: python varying_CollocationPoints.py --train True -e 50000 --gpu True
+    To plot: python varying_CollocationPoints.py -e 50000 --gpu True
 
 """
 
-
-import os,sys, re, time 
+import os, sys, re, time
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import numpy as np
@@ -33,29 +32,28 @@ parser.add_argument('-e', '--epochs', help='Maximum number of epochs (default 50
 
 args = parser.parse_args()
 
-parent_output_path = os.path.join(os.getcwd(), f'VARYING_NOISE_{args.epochs[0]}/')
+parent_output_path = os.path.join(os.getcwd(), f'VARYING_COLLOCATION_POINTS_{args.epochs[0]}/')
 os.makedirs(parent_output_path, exist_ok=True) 
 
-def plot_varying_DataNoise():
+def plot_varying_CollocationPoints():
     training_time = time.time()
 
-    # Fixed parameters
+    # fixed parameters
     layers = [5]*3
     actf = 'tanh'
-    numx = 100
+    noise_level = 0.05
     epochs = args.epochs[0]
     learningrate = 0.001
     independent_networks = False
     verbose = 2
     tend = 24
-    nCol = 200
+    numx = 100
     nTest = 500
-    batchsize = 300 # numx + nCol
     sparse = True
     gpu = args.gpu[0]
 
     # varying parameters
-    noise_levels = np.arange(0, 0.051, 0.01, dtype=float)
+    nCols = np.arange(100, 501, 100)
     time_limits = [[0,10], [10,24], [0, 24]]
     problem_types = [SaturatedGrowthModel, CompetitionModel, CompetitionModel]
     model_types = ["sg", "coexistence", "survival"]
@@ -63,7 +61,7 @@ def plot_varying_DataNoise():
     # initialize the root directories
     rootdirs = []
     for model_type in model_types:
-        output_path = os.path.join(parent_output_path, f'VARYING_NOISE_{model_type.upper()}/')
+        output_path = os.path.join(parent_output_path, f'VARYING_COLLOCATION_POINTS_{model_type.upper()}/')
         os.makedirs(output_path, exist_ok=True)
         rootdirs.append(output_path)
 
@@ -72,17 +70,17 @@ def plot_varying_DataNoise():
             model_args = {
                 'layers': layers,
                 'actf': actf,
-                'numx': numx,
+                'noise_level': noise_level,
                 'epochs': epochs,
-                'learningrate': learningrate,
+                'learningrate': 0.001,
                 'independent_networks': independent_networks,
                 'verbose': verbose,
                 'initial_conditions': 0.01,
                 'tend': tend,
-                'nCol': nCol,
+                'numx': numx,
                 'nTest': nTest,
-                'batchsize': batchsize, # numx + nCol
-                'sparse': sparse,
+                # 'batchsize': 25, # numx + nCol
+                'sparse':sparse,
                 'outputpath': rootdir,
                 'gpu': gpu,
             }
@@ -91,26 +89,27 @@ def plot_varying_DataNoise():
                 'model_type': model_type,
                 'layers': layers,
                 'actf': actf,
-                'numx': numx,
+                'noise_level': noise_level,
                 'epochs': epochs,
                 'learningrate': learningrate,
                 'independent_networks': independent_networks,
                 'verbose': verbose,
                 'initial_conditions': [2,1],
                 'tend': tend,
-                'nCol': nCol,
+                'numx': numx,
                 'nTest': nTest,
-                'batchsize': batchsize, # numx + nCol
+                # 'batchsize': 25, # numx + nCol
                 'sparse': sparse,
                 'outputpath': rootdir,
                 'gpu': gpu,
             }
         # Loop over the varying parameters and train the models
         processes = []
-        for noise_level in noise_levels:
+        for nCol in nCols:
             for time_limit in time_limits:
-                model_args['noise_level'] = noise_level
+                model_args['nCol'] = nCol
                 model_args['time_limit'] = time_limit
+                model_args['batchsize'] = numx + nCol
                 
                 # Prepare the command [problem based]
                 if problem.__name__=='SaturatedGrowthModel':
@@ -146,7 +145,7 @@ def plot_varying_DataNoise():
         ax3 = fig.add_subplot(gs_lossplot[0, 2])
         axis_map = {'0-10': ax1, '0-24': ax2, '10-24': ax3}
 
-        df = pd.DataFrame(columns=['Time Limit', 'Noise Level', 'MSE Learned', 'MSE Test'])
+        df = pd.DataFrame(columns=['Time Limit', 'Collocation Points', 'MSE Learned', 'MSE Test'])
 
         for dirpath, dirnames, filenames in os.walk(rootdir):
             if "res_loss" in filenames and "res_time" in filenames and "metrices.csv" in filenames:
@@ -161,11 +160,11 @@ def plot_varying_DataNoise():
                     if ax is None:
                         raise ValueError(f"Invalid time_limit key: {dir_time_limit_str}") 
                     
-                    nl = 'unknown'
-                    noise_match = re.search('nl_(\d+\.\d+)', dirpath)
-                    if noise_match:
-                        nl = noise_match.group(1)
-                cust_semilogx(ax, None, total_loss/total_loss[0], "epochs", "L/L0", label=f"nl-{nl}")
+                    nCol = 'unknown'
+                    nCol_match = re.search('_nC_(\d+)', dirpath)
+                    if nCol_match:
+                        nCol = nCol_match.group(1)
+                cust_semilogx(ax, None, total_loss/total_loss[0], "epochs", "L/L0", label=f"nCol-{nCol}")
                 ax.set_title(f'Time Limit: {dir_time_limit}')
                 ax.legend(ncol=3, bbox_to_anchor=(0.5, -0.2), loc='upper center', fontsize='small')
 
@@ -175,15 +174,18 @@ def plot_varying_DataNoise():
                 mse_learned = metrices.loc[metrices['Metric'] == 'MSE', 'Learned'].values[0]
                 mse_test = metrices.loc[metrices['Metric'] == 'MSE', 'Test'].values[0]
 
-                new_row = pd.DataFrame({'Time Limit': [dir_time_limit_str], 'Noise Level': [nl],
+                new_row = pd.DataFrame({'Time Limit': [dir_time_limit_str], 'Collocation Points': [nCol],
                                 'MSE Learned': [mse_learned], 'MSE Test': [mse_test]})
                 df = pd.concat([df, new_row], ignore_index=True)
         
         df['MSE Learned'] = pd.to_numeric(df['MSE Learned'], errors='coerce')
         df['MSE Test'] = pd.to_numeric(df['MSE Test'], errors='coerce')
 
-        pivot_learned = df.pivot(index="Noise Level", columns="Time Limit", values="MSE Learned")
-        pivot_test = df.pivot(index="Noise Level", columns="Time Limit", values="MSE Test")
+        df['Collocation Points'] = df['Collocation Points'].astype(int)
+        df = df.sort_values('Collocation Points')
+
+        pivot_learned = df.pivot(index="Collocation Points", columns="Time Limit", values="MSE Learned")
+        pivot_test = df.pivot(index="Collocation Points", columns="Time Limit", values="MSE Test")
 
         pivot_learned_log = pivot_learned.applymap(lambda x: np.log10(x + 1e-10))  # Adding a small number to avoid log(0)
         pivot_test_log = pivot_test.applymap(lambda x: np.log10(x + 1e-10))
@@ -218,13 +220,13 @@ def plot_varying_DataNoise():
         lambda_phy_tex = r"$\lambda_{\mathrm{phy}}$"
         lambda_data_tex = r"$\lambda_{\mathrm{data}}$"
 
-        params_text = (f"• nD: {model_args['numx']} " + 
-               f"• nC: {model_args['nCol']} " +
+        params_text = (f"• noise_level: {model_args['noise_level']} " + 
+               f"• nD: {model_args['numx']} " +
                f"• nT: {model_args['nTest']} " +
                f"• layer: {model_args['layers']} " +
                f"• epochs: {model_args['epochs']} " + 
                f"• learning_rate: {model_args['learningrate']} " + "\n"
-               f"• batchsize: {model_args['batchsize']} "
+               f"• batchsize: {model_args['numx']} + nCol " +
                f"• {lambda_phy_tex}: 1 " + # default: 1 #TODO: add the lambda_phy
                f"• {lambda_data_tex}: 1 " +  # default: 1 #TODO: add the lambda_data
                f"• Sparse: {model_args['sparse']} " + 
@@ -237,17 +239,14 @@ def plot_varying_DataNoise():
         ax0.get_yaxis().set_visible(False)
 
 
-        plt.suptitle('SciANN MSE Value by Time Limit and Data Noise', fontsize=14, verticalalignment='top')#, y=0.95)
+        plt.suptitle('SciANN MSE Value by Time Limit and Collocation Points', fontsize=14, verticalalignment='top')#, y=0.95)
         plt.subplots_adjust(hspace=0.2, top=0.88)
         plt.tight_layout()
-        plt.savefig(f"{rootdir}varying__DataNoiseLevel__({model_type}).png")
-
+        plt.savefig(f"{rootdir}varying__CollocationPoints__({model_type}).png")
+    
     training_time = time.time() - training_time
-    print("Total Training Time: ",training_time)
+    print(f"Total training time: {training_time} seconds")
     print("DONE")
 
 if __name__=="__main__":
-    plot_varying_DataNoise()
-    
-
-    
+    plot_varying_CollocationPoints()
