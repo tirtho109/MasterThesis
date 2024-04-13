@@ -1,3 +1,6 @@
+import tensorflow as tf
+from keras import backend as K
+
 import os, sys, time
 import shutil
 import numpy as np
@@ -28,6 +31,10 @@ parser.add_argument('-lr', '--learningrate', help='Initial learning rate (defaul
 parser.add_argument('-in', '--independent_networks', help='Use independent networks for each var (default True)', type=bool, nargs=1, default=[True])
 parser.add_argument('-v', '--verbose', help='Show training progress (default 2) (check Keras.fit)', type=int, nargs=1, default=[2])
 
+# weights for loss function
+parser.add_argument('--lambda_ode', help='loss weight for the ode (default 1)', type=float, default=1e0)
+parser.add_argument('--lambda_data', help='loss weight for the data (default 1)', type=float, default=1e0)
+
 # model parameters
 parser.add_argument('-ic', '--initial_conditions', help='Initial conditions for the model (default 0.01)', type=float, default=0.01)
 parser.add_argument('--tend', help='End time for the model simulation (default 24)', type=int, default=24)
@@ -41,7 +48,6 @@ parser.add_argument('-nl', '--noise_level', help='Level of noise in training dat
 parser.add_argument('-sf', '--show_figure', help='Show training data (default True)', type=bool, nargs=1, default=[True])
 
 parser.add_argument('--shuffle', help='Shuffle data for training (default True)', type=bool, nargs=1, default=[True])
-parser.add_argument('--stopafter', help='Patience argument from Keras (default 500)', type=int, nargs=1, default=[500])
 parser.add_argument('--savefreq', help='Frequency to save weights (each n-epoch)', type=int, nargs=1, default=[100000])
 parser.add_argument('--dtype', help='Data type for weights and biases (default float64)', type=str, nargs=1, default=['float64'])
 parser.add_argument('--gpu', help='Use GPU if available (default False)', type=bool, nargs=1, default=[False])
@@ -112,7 +118,9 @@ network_description = (
     f"Independent Networks: {args.independent_networks[0]}\n"
     f"Noise Level: {args.noise_level}\n"
     f"Sparse: {args.sparse[0]}\n"
-    f"Model Type: Saturated Growth" 
+    f"Model Type: Saturated Growth\n" 
+    f"ODE Loss Weight: {args.lambda_ode}\n"
+    f"Data Loss Weight: {args.lambda_data}\n"
 )
 
 def mse(predictions, targets):
@@ -130,12 +138,23 @@ def train_sg_model():
     c1 = sn.Tie(u_t, u*(C-u))
     d1 = sn.Data(u)
 
-    # Define the optimization model (set of inputs and constraints)
-    model = SciModel(
+    # SciModel doesn't support custom loss weights, so we need to subclass it
+    # and add a method to set the loss weights after the model is created
+    class CustomSciModel(SciModel):
+        def set_loss_weights(self, weights):
+            if len(weights) != len(self._loss_weights):
+                raise ValueError("Weight array length must match the number of output variables")
+            for idx, weight in enumerate(weights):
+                K.set_value(self._loss_weights[idx], weight)
+            self.compile() 
+
+    model = CustomSciModel(
         inputs=[t],
         targets=[d1, c1],
         loss_func="mse"
     )
+    model.set_loss_weights([args.lambda_data, args.lambda_ode])
+    
     with open("{}_summary".format(output_file_name), "w") as fobj:
         model.summary(print_fn=lambda x: fobj.write(x + '\n'))
 
@@ -183,8 +202,7 @@ def train_sg_model():
         epochs=args.epochs[0],
         batch_size=args.batchsize[0],
         shuffle=args.shuffle[0],
-        # learning_rate=args.learningrate[0],
-        # stop_after=args.stopafter[0],
+        learning_rate=args.learningrate[0],
         verbose=args.verbose[0],
         save_weights=save_weights_config,
         log_loss_landscape=log_loss_landscape_config,

@@ -1,3 +1,6 @@
+import tensorflow as tf
+from keras import backend as K
+
 import os, sys, time
 import shutil
 import numpy as np
@@ -26,9 +29,14 @@ parser.add_argument('--nTest', help='Number of collocation points(default 500)',
 parser.add_argument('-bs', '--batchsize', help='Batch size for Adam optimizer (default 25)', type=int, nargs=1, default=[25])
 parser.add_argument('-e', '--epochs', help='Maximum number of epochs (default 2000)', type=int, nargs=1, default=[2000])
 parser.add_argument('-lr', '--learningrate', help='Initial learning rate (default 0.001)', type=float, nargs=1, default=[0.001])
-parser.add_argument('-rlr', '--reduce_learning_rate', help='Reduce learning rate (default 100)', type=int, nargs=1, default=[100])
 parser.add_argument('-in', '--independent_networks', help='Use independent networks for each var (default True)', type=bool, nargs=1, default=[True])
 parser.add_argument('-v', '--verbose', help='Show training progress (default 2) (check Keras.fit)', type=int, nargs=1, default=[2])
+
+# weights for loss function
+parser.add_argument('--lambda_ode_u', help='loss weight for the ode of u(default 1)', type=float, default=1e0)
+parser.add_argument('--lambda_data_u', help='loss weight for the data of u(default 1)', type=float, default=1e0)
+parser.add_argument('--lambda_ode_v', help='loss weight for the ode of v(default 1)', type=float, default=1e0)
+parser.add_argument('--lambda_data_v', help='loss weight for the data of v(default 1)', type=float, default=1e0)
 
 # model parameters
 parser.add_argument('-ic', '--initial_conditions', help='Initial conditions(u0,v0) for the model (default [2,1])', type=float, nargs=2, default=[2,1])
@@ -44,7 +52,6 @@ parser.add_argument('-nl', '--noise_level', help='Level of noise in training dat
 parser.add_argument('-sf', '--show_figure', help='Show training data (default True)', type=bool, nargs=1, default=[True])
 
 parser.add_argument('--shuffle', help='Shuffle data for training (default True)', type=bool, nargs=1, default=[True])
-parser.add_argument('--stopafter', help='Patience argument from Keras (default 500)', type=int, nargs=1, default=[500])
 parser.add_argument('--savefreq', help='Frequency to save weights (each n-epoch)', type=int, nargs=1, default=[100000])
 parser.add_argument('--dtype', help='Data type for weights and biases (default float64)', type=str, nargs=1, default=['float64'])
 parser.add_argument('--gpu', help='Use GPU if available (default False)', type=bool, nargs=1, default=[False])
@@ -201,7 +208,11 @@ network_description = (
      f"Independent Networks: {args.independent_networks[0]}\n"
      f"Noise Level: {args.noise_level}\n"
      f"Sparse: {args.sparse[0]}\n"
-     f"Model Type: {args.model_type[0]}"
+     f"Model Type: {args.model_type[0]}\n"
+     f"ODE_u Loss Weight: {args.lambda_ode_u}\n"
+     f"Data_u Loss Weight: {args.lambda_data_u}\n"
+     f"ODE_v Loss Weight: {args.lambda_ode_v}\n"
+     f"Data_v Loss Weight: {args.lambda_data_v}\n"
 )
 
 def mse(predictions, targets):
@@ -238,11 +249,23 @@ def train_comp_model():
     c1 = Tie(u_t, u*(1-a1*u-a2*v))
     c2 = Tie(v_t, r*v*(1-b1*u-b2*v))
 
-    model = SciModel(
+    # SciModel doesn't support custom loss weights, so we need to subclass it
+    # and add a method to set the loss weights after the model is created
+    class CustomSciModel(SciModel):
+        def set_loss_weights(self, weights):
+            if len(weights) != len(self._loss_weights):
+                raise ValueError("Weight array length must match the number of output variables")
+            for idx, weight in enumerate(weights):
+                K.set_value(self._loss_weights[idx], weight)
+            self.compile() 
+
+    model = CustomSciModel(
         inputs=[t],
         targets=[d1, d2, c1, c2],
         loss_func="mse"
     )
+    model.set_loss_weights([args.lambda_data_u, args.lambda_data_v, args.lambda_ode_u, args.lambda_ode_v])
+
     with open("{}_summary".format(output_file_name), "w") as fobj:
         model.summary(print_fn=lambda x: fobj.write(x + '\n'))
 
@@ -309,8 +332,6 @@ def train_comp_model():
         batch_size=args.batchsize[0],
         shuffle=args.shuffle[0],
         learning_rate=args.learningrate[0],
-        # reduce_lr_after=args.reduce_learning_rate[0],
-        # stop_after=args.stopafter[0],
         verbose=args.verbose[0],
         save_weights=save_weights_config,
         log_loss_landscape=log_loss_landscape_config,
