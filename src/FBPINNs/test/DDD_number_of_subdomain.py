@@ -47,7 +47,7 @@ def plot_DDD_number_of_subdomain():
     lambda_phy = 1e0
     lambda_data = 1e0
     sparse = True
-    noise_level = 0.005
+    noise_level = 0.05
     tbegin = 0
     tend = 24
     wo = 1.9
@@ -295,7 +295,7 @@ def plot_DDD_number_of_subdomain():
         plt.suptitle('MSE Value by Time Limit and Number of Subdomain', fontsize=14, verticalalignment='top')# , y=0.95)
         plt.subplots_adjust(hspace=0.5, top=0.88)
         plt.tight_layout()
-        file_path = f"{rootdir}/summaries/MSE_varying_num_of_subdomains.png"
+        file_path = f"{parentdir}/MSE_varying_num_of_subdomains({name}).png"
         plt.savefig(file_path)
 
         print("DONE")

@@ -44,7 +44,7 @@ def plot_DDD_uniformity():
     lambda_phy = 1e0
     lambda_data = 1e0
     sparse = True
-    noise_level = 0.005
+    noise_level = 0.05
     nsub = 2
     tbegin = 0
     tend = 24
@@ -273,7 +273,7 @@ def plot_DDD_uniformity():
         ax1.legend()
 
         plt.suptitle('MSE Values by Time Limit and Subdomain Type', fontsize=14, verticalalignment='top', y=0.95)
-        file_path = f"{rootdir}/summaries/subdomain_comparison.png"
+        file_path = f"{parentdir}/subdomain_comparison({name}).png"
         plt.savefig(file_path)
         
         print("DONE")

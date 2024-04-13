@@ -300,7 +300,7 @@ def plot_DDD_varying_CollocationPoints():
         plt.suptitle('MSE Value by Time Limit and Collocation Points', fontsize=14, verticalalignment='top')#, y=0.95)
         plt.subplots_adjust(hspace=0.2, top=0.88)
         plt.tight_layout()
-        file_path = f"{rootdir}/summaries/MSE_varying_CollocationPoints.png"
+        file_path = f"{parentdir}/MSE_varying_CollocationPoints({name}).png"
         plt.savefig(file_path)
 
         print("DONE")
