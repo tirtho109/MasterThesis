@@ -44,8 +44,8 @@ class BaseModel(ABC):
     
     def generate_training_dataset(self, numpoints:int=500, 
                       sparse:bool=False, time_limit:list=None, 
-                      noise_level:float=0.0, show_figure=False,
-                      save_path=None)-> Tuple[np.ndarray, np.ndarray]:
+                      noise_level:float=0.0, show_figure:bool=False,
+                      save_path:str=None, seed:int=None)-> Tuple[np.ndarray, np.ndarray]:
         """
             Generates training data by solving an ODE, with options for sparsity, time limits, noise addition, and visualization.
 
@@ -72,6 +72,11 @@ class BaseModel(ABC):
                 raise ValueError("Time limit 'time_limit' must contain increasing values greater than zero.")
         else:
             time_limit = [0, self.tend]
+        # set seed to 0 if seed is None else set np random seed
+        # to reproduce the same results
+        if seed is None:
+            seed = 0
+        np.random.seed(seed)
 
         if sparse:
             tTrain = np.sort(np.random.uniform(time_limit[0], time_limit[1], numpoints))

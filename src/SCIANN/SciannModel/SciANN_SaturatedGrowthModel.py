@@ -34,6 +34,7 @@ parser.add_argument('--lambda_data', help='loss weight for the data (default 1)'
 # model parameters
 parser.add_argument('-ic', '--initial_conditions', help='Initial conditions for the model (default 0.01)', type=float, default=0.01)
 parser.add_argument('--tend', help='End time for the model simulation (default 24)', type=int, default=24)
+parser.add_argument('--seed', help='add seed for reproducibility (default 0)', type=int, default=0)
 parser.add_argument('--nCol', help='Number of collocation points(default 200)', type=int, default=200)
 parser.add_argument('--nTest', help='Number of collocation points(default 500)', type=int, default=500)
 
@@ -123,7 +124,8 @@ def mse(predictions, targets):
     return ((predictions - targets) ** 2).mean()
 
 def train_sg_model():
-
+    # sn.reset_session()
+    sn.set_random_seed(args.seed)
     # NN Setup
     # using Hard constraints
     t = sn.Variable("t", dtype='float64')
@@ -157,7 +159,7 @@ def train_sg_model():
 
     sg_model = SaturatedGrowthModel(C=1.0, initial_conditions=args.initial_conditions, tend=args.tend)
     np.savetxt(output_file_name+"_C_true",[1.0], delimiter=', ')
-    np.random.seed(0)
+    np.random.seed(args.seed)
     plot_save_file = f"{args.outputprefix[0]}__training_data_plot.png"
     plot_save_path = os.path.join(output_folder, plot_save_file)
     # prepare training data
@@ -167,7 +169,8 @@ def train_sg_model():
                                                                 time_limit=args.time_limit, 
                                                                 noise_level=args.noise_level, 
                                                                 show_figure=args.show_figure[0],
-                                                                save_path=plot_save_path if args.show_figure[0] else None
+                                                                save_path=plot_save_path if args.show_figure[0] else None,
+                                                                seed=args.seed,
                                                                 )
     collocation_points = np.linspace(0, args.tend, args.nCol)
     t_total = np.unique(np.sort(np.concatenate((collocation_points, data_time))))
@@ -305,5 +308,3 @@ if __name__=="__main__":
          plot()
     else:
          plot()
-    
-

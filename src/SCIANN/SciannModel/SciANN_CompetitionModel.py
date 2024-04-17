@@ -3,6 +3,7 @@ import shutil
 import numpy as np
 
 from keras import backend as K
+import sciann as sn
 from sciann.utils.math import tanh, diff
 from sciann import SciModel, Functional, Parameter
 from sciann import Data, Tie
@@ -22,7 +23,8 @@ parser = argparse.ArgumentParser(description='''
 
 parser.add_argument('-l', '--layers', help='Num layers and neurons (default 4 layers each 40 neurons [5, 5, 5])', type=int, nargs='+', default=[5]*3)
 parser.add_argument('-af', '--actf', help='Activation function (default tanh)', type=str, nargs=1, default=['tanh'])
-parser.add_argument('-nx', '--numx', help='Num Node in X (default 20)', type=int, nargs=1, default=[20])
+parser.add_argument('-nx', '--numx', help='Num Node in X (default 20)', type=int, nargs=1, default=[100])
+parser.add_argument('--seed', help='add seed for reproducibility (default 0)', type=int, default=0)
 parser.add_argument('--nCol', help='Number of collocation points(default 200)', type=int, default=200)
 parser.add_argument('--nTest', help='Number of collocation points(default 500)', type=int, default=500)
 parser.add_argument('-bs', '--batchsize', help='Batch size for Adam optimizer (default 25)', type=int, nargs=1, default=[25])
@@ -218,7 +220,8 @@ def mse(predictions, targets):
     return ((predictions - targets) ** 2).mean()
 
 def train_comp_model():
-
+    # sn.reset_session()
+    sn.set_random_seed(args.seed)
     # NN Setup
     # using Hard constraints
     t = Variable("t", dtype=args.dtype[0])              # input
@@ -290,7 +293,8 @@ def train_comp_model():
                                                                 time_limit=args.time_limit, 
                                                                 noise_level=args.noise_level, 
                                                                 show_figure=args.show_figure[0],
-                                                                save_path=plot_save_path if args.show_figure[0] else None
+                                                                save_path=plot_save_path if args.show_figure[0] else None,
+                                                                seed=args.seed,
                                                                 )
     collocation_points = np.linspace(0, args.tend, args.nCol)
     t_total = np.unique(np.sort(np.concatenate((collocation_points, data_time))))
