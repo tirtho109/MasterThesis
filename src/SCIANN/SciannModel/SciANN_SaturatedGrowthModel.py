@@ -1,17 +1,13 @@
-import tensorflow as tf
 from keras import backend as K
+import sciann as sn
+from sciann.utils.math import diff, tanh
+from sciann import SciModel
 
-import os, sys, time
+import os, time
 import shutil
 import numpy as np
-import random
-from sciann.utils.math import diff, tanh
-from sciann import SciModel, Functional, Parameter
-from sciann import Data, Tie
-from sciann import Variable, Field
 
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 import argparse
 from model_ode_solver import *
 
@@ -43,8 +39,8 @@ parser.add_argument('--nTest', help='Number of collocation points(default 500)',
 
 # arguments for training data generator
 parser.add_argument('--sparse', help='Sparsity of training data (default True)', type=bool, nargs=1, default=[True])
-parser.add_argument('-tl', '--time_limit', help='Time window for the training data (default [10, 30])', type=int, nargs=2, default=[0, 24])
-parser.add_argument('-nl', '--noise_level', help='Level of noise in training data (default 0.05)', type=float, default=0.005)
+parser.add_argument('-tl', '--time_limit', help='Time window for the training data (default [0, 24])', type=int, nargs=2, default=[0, 24])
+parser.add_argument('-nl', '--noise_level', help='Level of noise in training data (default 0.05)', type=float, default=0.05)
 parser.add_argument('-sf', '--show_figure', help='Show training data (default True)', type=bool, nargs=1, default=[True])
 
 parser.add_argument('--shuffle', help='Shuffle data for training (default True)', type=bool, nargs=1, default=[True])
@@ -151,7 +147,8 @@ def train_sg_model():
     model = CustomSciModel(
         inputs=[t],
         targets=[d1, c1],
-        loss_func="mse"
+        loss_func="mse",
+        plot_to_file=output_file_name+"__model.png",
     )
     model.set_loss_weights([args.lambda_data, args.lambda_ode])
     

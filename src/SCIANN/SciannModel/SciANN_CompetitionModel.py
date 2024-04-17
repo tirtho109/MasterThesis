@@ -1,17 +1,16 @@
-import tensorflow as tf
-from keras import backend as K
-
-import os, sys, time
+import os, time
 import shutil
 import numpy as np
-import random
+
+from keras import backend as K
 from sciann.utils.math import tanh, diff
 from sciann import SciModel, Functional, Parameter
 from sciann import Data, Tie
-from sciann import Variable, Field
+from sciann import Variable
 
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+
 import argparse
 from model_ode_solver import *
 
@@ -29,7 +28,7 @@ parser.add_argument('--nTest', help='Number of collocation points(default 500)',
 parser.add_argument('-bs', '--batchsize', help='Batch size for Adam optimizer (default 25)', type=int, nargs=1, default=[25])
 parser.add_argument('-e', '--epochs', help='Maximum number of epochs (default 2000)', type=int, nargs=1, default=[2000])
 parser.add_argument('-lr', '--learningrate', help='Initial learning rate (default 0.001)', type=float, nargs=1, default=[0.001])
-parser.add_argument('-in', '--independent_networks', help='Use independent networks for each var (default True)', type=bool, nargs=1, default=[True])
+parser.add_argument('-in', '--independent_networks', help='Use independent networks for each var (default False)', type=bool, nargs=1, default=[False])
 parser.add_argument('-v', '--verbose', help='Show training progress (default 2) (check Keras.fit)', type=int, nargs=1, default=[2])
 
 # weights for loss function
@@ -47,8 +46,8 @@ parser.add_argument('--model_type', help='Survival or co-existence model (defaul
 
 # arguments for training data generator
 parser.add_argument('--sparse', help='Sparsity of training data (default True)', type=bool, nargs=1, default=[True])
-parser.add_argument('-tl', '--time_limit', help='Time window for the training data (default [10, 30])', type=int, nargs=2, default=[0, 24])
-parser.add_argument('-nl', '--noise_level', help='Level of noise in training data (default 0.005)', type=float, default=0.005)
+parser.add_argument('-tl', '--time_limit', help='Time window for the training data (default [0, 24])', type=int, nargs=2, default=[0, 24])
+parser.add_argument('-nl', '--noise_level', help='Level of noise in training data (default 0.05)', type=float, default=0.05)
 parser.add_argument('-sf', '--show_figure', help='Show training data (default True)', type=bool, nargs=1, default=[True])
 
 parser.add_argument('--shuffle', help='Shuffle data for training (default True)', type=bool, nargs=1, default=[True])
@@ -224,14 +223,14 @@ def train_comp_model():
     # using Hard constraints
     t = Variable("t", dtype=args.dtype[0])              # input
 
-    if args.independent_networks:  
+    if args.independent_networks[0]:  
         x = Functional("x", t, args.layers, args.actf[0])   # output
         y = Functional("y", t, args.layers, args.actf[0])
     else:
          x, y = Functional(
                         ["x", "y"], t, 
                         args.layers, 
-                        args.actf[0]).split()
+                        args.actf[0])#.split()
     u = args.initial_conditions[0] + tanh(t/args.sd)*x
     v = args.initial_conditions[1] + tanh(t/args.sd)*y
     r = Parameter(0.5, inputs=t, name="r" )                 # Learnable parameters
@@ -262,7 +261,8 @@ def train_comp_model():
     model = CustomSciModel(
         inputs=[t],
         targets=[d1, d2, c1, c2],
-        loss_func="mse"
+        loss_func="mse",
+        plot_to_file=output_file_name+"__model.png",
     )
     model.set_loss_weights([args.lambda_data_u, args.lambda_data_v, args.lambda_ode_u, args.lambda_ode_v])
 

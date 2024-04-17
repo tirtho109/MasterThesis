@@ -1,16 +1,13 @@
-import numpy as np
-import sciann as sn 
-import matplotlib.pyplot as plt
-import csv
-
 import os
-import sys
+from typing import Tuple
+
+import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+
 from scipy.integrate import odeint
 from scipy.interpolate import interp1d
 from scipy.interpolate import griddata
-import plotly.graph_objects as go
-import plotly.io as pio
 
 from abc import ABC, abstractmethod
 
@@ -44,77 +41,28 @@ class BaseModel(ABC):
         This abstract method must be implemented by child classes.
         """
         pass
-
-    def generate_training_data(self, numpoints=500, 
-                      sparse=False, time_limit=None, 
-                      noise_level=0.0, show_figure=False,
-                      save_path=None):
-        """
-        Generates training data by solving an ODE, with options for sparsity, time limits, noise addition, and visualization.
-
-        Parameters:
-        - numpoints (int, optional): Number of data points (default 500).
-        - sparse (bool, optional): Toggle for sparse data generation (default False).
-        - time_limit (list/tuple, optional): Time window [start, end] for data generation (default None).
-        - noise_level (float, optional): Level of Gaussian noise to add (default 0.0).
-        - show_figure (bool, optional): Show scatter plot of data if True (default False).
-
-        Returns:
-        - tTrain (numpy.ndarray): Time points of the training data.
-        - sol_noisy (numpy.ndarray): ODE solution at 'tTrain' with optional noise.
-
-        Raises:
-        - ValueError: For invalid 'tend', 'numpoints', or 'time_limit' values.
-        """
-         # check conditions
-        if numpoints <=1:
-            raise ValueError("Numer of points 'numpoints' must be greater than one.")
-        if time_limit is not None:
-            if not isinstance(time_limit, (list, tuple)) or len(time_limit) != 2:
-                raise ValueError("Time limit 'time_limit' must be a list or tuple with two elements.")
-            if not 0 <= time_limit[0] < time_limit[1]:
-                raise ValueError("Time limit 'time_limit' must contain increasing values greater than zero.")
-        # sparsity 
-        if sparse:
-            tTrain = np.sort(np.random.uniform(0, self.tend, numpoints))
-            tTrain[0] = 0.0
-        else:
-            tTrain = np.linspace(0, self.tend, numpoints)
-
-        t_span, sol = self.solve_ode(self.initial_conditions, tTrain)
-
-        if time_limit is None:
-            time_limit = [0, self.tend]
-        mask = (t_span == t_span[0]) | ((t_span >= time_limit[0]) & (t_span <= time_limit[1]))
-        tTrain = t_span[mask]
-        sol = sol[mask]
-
-        noise = np.random.normal(0, noise_level, sol.shape)
-        sol_noisy = sol + noise
-        
-        if show_figure:
-            for i in range(sol_noisy.shape[1]):
-                plt.scatter(tTrain, sol_noisy[:,i], label=f'Cell Population {i+1}')
-                plt.legend()
-            title = f'Training Points - Noise Level: {noise_level}'
-            if time_limit:
-                title += f', Time Window: [{time_limit[0]}, {time_limit[1]}]'
-            plt.title(title)
-            plt.xlabel('t')
-            plt.ylabel('Population')
-            if save_path:
-                if os.path.basename(save_path) == '':
-                    raise ValueError("Please provide a file name with the save path.")
-                plt.savefig(save_path)
-            else:
-                plt.show()
-        return tTrain, sol_noisy
     
+    def generate_training_dataset(self, numpoints:int=500, 
+                      sparse:bool=False, time_limit:list=None, 
+                      noise_level:float=0.0, show_figure=False,
+                      save_path=None)-> Tuple[np.ndarray, np.ndarray]:
+        """
+            Generates training data by solving an ODE, with options for sparsity, time limits, noise addition, and visualization.
 
-    def generate_training_dataset(self, numpoints=500, 
-                      sparse=False, time_limit=None, 
-                      noise_level=0.0, show_figure=False,
-                      save_path=None):
+            Parameters:
+            - numpoints (int, optional): Number of data points (default 500).
+            - sparse (bool, optional): Toggle for sparse data generation (default False).
+            - time_limit (list/tuple, optional): Time window [start, end] for data generation (default None).
+            - noise_level (float, optional): Level of Gaussian noise to add (default 0.0).
+            - show_figure (bool, optional): Show scatter plot of data if True (default False).
+
+            Returns:
+            - tTrain (numpy.ndarray): Time points of the training data.
+            - sol_noisy (numpy.ndarray): ODE solution at 'tTrain' with optional noise.
+
+            Raises:
+            - ValueError: For invalid 'tend', 'numpoints', or 'time_limit' values.
+        """
          # check conditions
         assert numpoints > 1, "Number of points must be greater than one."
         if time_limit is not None:
@@ -357,5 +305,3 @@ def plot_loss_landscape_contour(file_path, ax=None):
     if own_figure:
         plt.show()
     return ax
-
-
