@@ -226,14 +226,19 @@ def train_comp_model():
     # using Hard constraints
     t = Variable("t", dtype=args.dtype[0])              # input
 
-    if args.independent_networks[0]:  
-        x = Functional("x", t, args.layers, args.actf[0])   # output
-        y = Functional("y", t, args.layers, args.actf[0])
-    else:
-         x, y = Functional(
-                        ["x", "y"], t, 
+    #TODO: Need to check why independent network is not working for False, while calling from other script
+    # if args.independent_networks[0]:  
+    #     x = Functional("x", t, args.layers, args.actf[0])   # output
+    #     y = Functional("y", t, args.layers, args.actf[0])
+    # else:
+    #      x, y = Functional(
+    #                     ["x", "y"], t, 
+    #                     args.layers, 
+    #                     args.actf[0])#.split()
+    x, y = Functional(["x", "y"], t, 
                         args.layers, 
-                        args.actf[0])#.split()
+                        args.actf[0])
+    
     u = args.initial_conditions[0] + tanh(t/args.sd)*x
     v = args.initial_conditions[1] + tanh(t/args.sd)*y
     r = Parameter(0.5, inputs=t, name="r" )                 # Learnable parameters
