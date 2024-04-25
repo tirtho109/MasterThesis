@@ -93,7 +93,19 @@ def plot_1D_FBPINN(x_batch_test, u_exact, u_test, us_test, ws_test, us_raw_test,
 
     plt.tight_layout()
 
-    return (("test",f),)
+    f2 = plt.figure(figsize=(8, 5))
+    if i==0:
+        plt.title("Window functions")
+        for im in range(all_params["static"]["decomposition"]["m"]):
+            plt.plot(x_batch_test[:,0], ws_test[im,:,0], color=colors[im], label=f"window {im+1}")
+        plt.legend()
+        plt.xlim(*xlim)
+        plt.tight_layout()
+
+    if i==0:
+        return (("test",f),("window",f2),)
+    else:
+        return (("test",f),)
 
 @_to_numpy
 def plot_1D_PINN(x_batch_test, u_exact, u_test, u_raw_test, x_batch, all_params, i, n_test):
