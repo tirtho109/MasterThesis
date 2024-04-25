@@ -301,14 +301,15 @@ if __name__ == "__main__":
     key = jax.random.PRNGKey(0)
 
     batch_shapes = ((200,),)
-    _, ud, vd, ujs = CompetitionModel.sample_constraints(all_params, domain, key, 'grid', batch_shapes)[1]
-
+    _, sol, ujs = CompetitionModel.sample_constraints(all_params, domain, key, 'grid', batch_shapes)[1]
+    ud = sol[:, 0:1]
+    vd = sol[:, 1:2]   
     print(ud.shape, vd.shape, ujs)
 
     x_batch = np.linspace(0, 24, 200).reshape(-1, 1)
     sol = CompetitionModel.exact_solution(all_params, x_batch)
     print(sol.shape)
-    # time span 0 to 24 with 100 step
+    
     t = np.linspace(0, 24, 50)
     # plot u and v over time
     plt.figure()
