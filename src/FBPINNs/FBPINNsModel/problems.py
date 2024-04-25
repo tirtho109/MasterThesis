@@ -129,7 +129,7 @@ class CompetitionModel(Problem):
     def init_params(params=[0.5, 0.7, 0.3, 0.3, 0.6], 
                     u0=2, v0=1, sd=0.1, time_limit=[0,24], 
                     numx=50, lambda_phy=1e0, lambda_data=1e0,
-                    sparse=False, noise_level=0.0):
+                    sparse=False, noise_level=0.00):
         
         r, a1, a2, b1, b2 = params 
         static_params = {
@@ -176,17 +176,15 @@ class CompetitionModel(Problem):
             x_batch_data = jnp.sort(jax.random.uniform(key=key, shape=(numx,1), minval=time_limit[0], maxval=time_limit[1]), axis=0)
         else:
             x_batch_data = jnp.linspace(time_limit[0],time_limit[1],numx).astype(float).reshape((numx,1)) 
-        noise = jax.random.normal(key, shape=(numx,1))  * all_params['static']['problem']['noise_level']
+        noise = jax.random.normal(key, shape=(numx,2))  * all_params['static']['problem']['noise_level']
         solution = CompetitionModel.exact_solution(all_params, x_batch_data)
-        u_data = solution[:,0] + noise
-        v_data = solution[:,1] + noise
+        solution = solution + noise
         required_ujs_data = (
             (0, ()), 
             (1, ()),  
         )
-
         return [[x_batch_phys, required_ujs_phys],
-                [x_batch_data, u_data, v_data, required_ujs_data]]
+                [x_batch_data, solution, required_ujs_data]]
     
     @staticmethod
     def constraining_fn(all_params, x_batch, solution):
@@ -214,9 +212,9 @@ class CompetitionModel(Problem):
         phys = lambda_phy*(phys1 + phys2)
 
         # Data Loss
-        _, ud, vd, u, v = constraints[1]
-        u = u.reshape(-1) 
-        v = v.reshape(-1) 
+        _, sol, u, v = constraints[1]
+        ud = sol[:, 0:1]
+        vd = sol[:, 1:2]
         data = lambda_data*(jnp.mean((u-ud)**2) + lambda_data*jnp.mean((v-vd)**2))
 
         # Penalty for negative parameters
@@ -281,4 +279,44 @@ class CompetitionModel(Problem):
         solution = odeint(CompetitionModel.model, [u0, v0], x_batch, args=(params,))
 
         return solution
+    
+
+if __name__ == "__main__":
+    from fbpinns.domains import RectangularDomainND
+    import numpy as np
+
+    np.random.seed(0)  
+
+    ps_ = CompetitionModel.init_params()
+    problem_static, problem_trainable = ps_
+
+    domain = RectangularDomainND
+    xmin, xmax = jnp.array([0,]), jnp.array([24,])
+    domain_static, domain_trainable = domain.init_params(xmin, xmax)
+    all_params = {"static": {"problem": problem_static, "domain": domain_static}, 
+                  "trainable": {"problem": problem_trainable, "domain": domain_trainable}}
+
+    print(all_params)
+    # set jax random key to seed 0
+    key = jax.random.PRNGKey(0)
+
+    batch_shapes = ((200,),)
+    _, ud, vd, ujs = CompetitionModel.sample_constraints(all_params, domain, key, 'grid', batch_shapes)[1]
+
+    print(ud.shape, vd.shape, ujs)
+
+    x_batch = np.linspace(0, 24, 200).reshape(-1, 1)
+    sol = CompetitionModel.exact_solution(all_params, x_batch)
+    print(sol.shape)
+    # time span 0 to 24 with 100 step
+    t = np.linspace(0, 24, 50)
+    # plot u and v over time
+    plt.figure()
+    plt.scatter(t, ud, label='u')
+    plt.scatter(t, vd, label='v')
+    plt.show()
+
+
+    
+
     

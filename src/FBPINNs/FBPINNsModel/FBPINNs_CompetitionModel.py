@@ -32,7 +32,7 @@ def get_parser():
     parser.add_argument('--model_type', help='Survival or co-existence model (default survival**)', type=str, nargs=1, default=['survival'])
     parser.add_argument('--tend', help='End time for the model simulation (default 24)', type=int, default=24)
     parser.add_argument('--tbegin', help='Begin time for the model simulation (default 0)', type=int, default=0)
-    parser.add_argument('-nx','--numx', help='Number of data points (default 50)', type=int, default=50)
+    parser.add_argument('-nx','--numx', help='Number of data points (default 100)', type=int, default=100)
     parser.add_argument('-tl', '--time_limit', help='Time window for the training data (default [0, 24])', type=int, nargs=2, default=[0, 24])
 
     parser.add_argument('-nsub','--num_subdomain', help='Number of sub-domains (default 2)', type=int, default=2)
@@ -48,7 +48,7 @@ def get_parser():
 
     parser.add_argument('-nc','--num_collocation', help='Number of collocation points (default 200)', type=int, default=200)
     parser.add_argument('--sampler', help='Collocation sampler, one of ["grid", "uniform", "sobol", "halton"] (default: "grid")', type=str, nargs=1, default=['grid'])
-    parser.add_argument('-nt','--num_test', help='Number of test points (default 200)', type=int, default=200)
+    parser.add_argument('-nt','--num_test', help='Number of test points (default 500)', type=int, default=500)
     parser.add_argument('-e','--epochs', help='Number of epochs (default 50000)', type=int, default=50000)
 
     parser.add_argument('--rootdir', type=str, default='CompModels', help='Root directory for saving models and summaries (default: "CompModels")')
