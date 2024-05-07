@@ -19,7 +19,7 @@ from fbpinns.trainers import FBPINNTrainer
 from fbpinns.analysis import load_model
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
-from FBPINNsModel.plot import plot_model_comparison, get_us, export_mse_mae, export_parameters
+from FBPINNsModel.plot import plot_model_comparison, get_us, export_mse_mae, export_parameters, get_x_batch
 from FBPINNsModel.subdomain_helper import get_subdomain_xsws
 
 parser = argparse.ArgumentParser(description='''
@@ -192,7 +192,36 @@ def plot_DDD_varying_wo_NoDataRegion():
                         ax.legend()
                         file_path = os.path.join(c.summary_out_dir, "normalized_loss.png")
                         plt.savefig(file_path)
-        
+
+        # model comparison plot(whole)
+        models_fig, models_ax = plt.subplots(2, 2, figsize=(12, 10), dpi=300)
+        for run in runs:
+            c_out, model = load_model(run, rootdir=rootdir+"/")
+            overlap = run.split("_")[6]
+            tl = c_out.problem_init_kwargs['time_limit']
+            column_index = 0 if tl == [0,10] else 1 if tl == [10,24] else -1 
+            if column_index != -1:
+                u_exact, u_test, u_learned = get_us(c_out, model, type="FBPINN")
+                x_batch = get_x_batch(c, model)
+                labels  = ["u", "v"]    
+                for i in range(0, u_exact.shape[1]):
+                    models_ax[0, column_index].plot(x_batch, u_learned[:,i], '-.', label=f"{labels[i]}-{overlap}")
+                    models_ax[1, column_index].plot(x_batch, u_test[:,i], ':', label=f"{labels[i]}-{overlap}") 
+
+        for i in range(u_exact.shape[1]):  
+            models_ax[0,0].plot(x_batch, u_exact[:, i], label=f"{labels[i]}-true") 
+            models_ax[1,0].plot(x_batch, u_exact[:, i], label=f"{labels[i]}-true")  
+            models_ax[0,1].plot(x_batch, u_exact[:, i], label=f"{labels[i]}-true") 
+            models_ax[1,1].plot(x_batch, u_exact[:, i], label=f"{labels[i]}-true")   
+        for i in range(2):  # For each row
+            for j in range(2):  # For each column
+                models_ax[i][j].set_title(f"{'Learned' if i == 0 else 'Test'}-tl[{'0-10' if j == 0 else '10-24'}]")
+                models_ax[i][j].legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), shadow=True, ncol=3 if problem.__name__=="SaturatedGrowthModel" else 4)
+        models_fig.tight_layout()
+        file_path = f"{parentdir}/Models_plot({name}).png"
+        models_fig.savefig(file_path)
+
+        # plot text, heatmap and loss
         fig = plt.figure(figsize=(12, 10), dpi=300)
         gs = gridspec.GridSpec(3, 1, height_ratios=[1, 5, 4])
         gs_lossplot = gridspec.GridSpecFromSubplotSpec(1, 2, subplot_spec=gs[2], wspace=0.3) 
@@ -262,10 +291,13 @@ def plot_DDD_varying_wo_NoDataRegion():
                     f"• {lambda_phy_tex}: {lambda_phy} " +
                     f"• {lambda_data_tex}: {lambda_data} " + 
                     f"• Sparse: {sparse} " +
-                    f"• Noise: {noise_level} " + "\n"
+                    f"• Noise: {noise_level} " + 
+                    f"• optimiser: {c_out.optimiser.__name__} " +
+                    f"• lr: {c_out.optimiser_kwargs["learning_rate"]} " +"\n"
+                    f"• DD: Nonuniform " +
                     f"• nsub: {nsub} " +
                     f"• wo: {wo} " +
-                    f"• Problem: {problem.__name__ if hasattr(problem, '__name__') else problem}")
+                    f"• Problem: {problem.__name__ if hasattr(problem, '__name__') else problem}({name})")
 
         ax0.text(0.5, 0.5, params_text, ha='center', va='center', fontsize=12)
         ax0.set_frame_on(False)

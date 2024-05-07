@@ -274,9 +274,12 @@ def plot_DDD_varying_overlap():
                     f"• {lambda_phy_tex}: {lambda_phy} " +
                     f"• {lambda_data_tex}: {lambda_data} " + 
                     f"• Sparse: {sparse} " +
+                    f"• optimiser: {c_out.optimiser.__name__} " +
+                    f"• lr: {c_out.optimiser_kwargs["learning_rate"]} " +
                     f"• Noise: {noise_level} " + "\n"
+                    f"• DD: Nonuniform " +
                     f"• nsub: {nsub} " +
-                    f"• Problem: {problem.__name__ if hasattr(problem, '__name__') else problem}") 
+                    f"• Problem: {problem.__name__ if hasattr(problem, '__name__') else problem}({name})") 
 
         ax0.text(0.5, 0.5, params_text, ha='center', va='center', fontsize=12)
         ax0.set_frame_on(False)
