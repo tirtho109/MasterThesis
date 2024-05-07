@@ -128,7 +128,7 @@ class CompetitionModel(Problem):
     @staticmethod
     def init_params(params=[0.5, 0.7, 0.3, 0.3, 0.6], 
                     u0=2, v0=1, sd=0.1, time_limit=[0,24], 
-                    numx=50, lambda_phy=1e0, lambda_data=1e0,
+                    numx=50, lambda_phy=1e0, lambda_data=1e0, lambda_param=1e6,
                     sparse=False, noise_level=0.00):
         
         r, a1, a2, b1, b2 = params 
@@ -146,6 +146,7 @@ class CompetitionModel(Problem):
             "numx":numx,
             "lambda_phy": lambda_phy,
             "lambda_data": lambda_data,
+            "lambda_param": lambda_param,
             "sparse":sparse,
             "noise_level":noise_level,
         }
@@ -218,9 +219,9 @@ class CompetitionModel(Problem):
         data = lambda_data*(jnp.mean((u-ud)**2) + lambda_data*jnp.mean((v-vd)**2))
 
         # Penalty for negative parameters
-        penalty_factor = 1e6
+        penalty_factor = all_params["static"]["problem"]["lambda_param"]
         penalty_terms = [r, a1, a2, b1, b2]
-        penalties = sum(jnp.where(param < 0, penalty_factor * (param ** 2), 0) for param in penalty_terms)
+        penalties = sum(jnp.where(param <= 0, penalty_factor * (param ** 2), 0) for param in penalty_terms)
         
         return phys + data + penalties
     
