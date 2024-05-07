@@ -66,6 +66,17 @@ class FCN(Network):
         w, b = params[-1]
         x = jnp.dot(w, x) + b
         return x
+    
+class FCNLinear(FCN):
+    @staticmethod
+    def network_fn(params, x):
+        params = params["trainable"]["network"]["subdomain"]["layers"]
+        for w, b in params[:-1]:
+            x = jnp.dot(w, x) + b # linear activation function
+            # x = jnp.tanh(x)
+        w, b = params[-1]
+        x = jnp.dot(w, x) + b
+        return x
 
 class AdaptiveFCN(Network):
 
