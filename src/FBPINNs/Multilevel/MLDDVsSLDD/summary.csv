@@ -1,37 +1,19 @@
 Time Limit,Model Type,MSE Learned,MSE Test,Level,Hidden Layers and Units,run,rootdir
-"[0, 10]",SG,0.00031156986,0.0002334028,2,3X5,"FBPINN_SG_SaturatedGrowthModel_FCN_[1, 2]-lev_1.9-ww_3-hl_5-hu_200-n_[0, 10]-tl",SLvsML_simple/SGMultilevel\0-10
-"[0, 10]",SG,7.711197e-05,8.7498214e-05,1,3X5,"FBPINN_SG_SaturatedGrowthModel_FCN_[1]-lev_1.9-ww_3-hl_5-hu_200-n_[0, 10]-tl",SLvsML_simple/SGMultilevel\0-10
-"[0, 10]",SG,8.1674266e-08,1.7935628e-05,3,3X5,"FBPINN_SG_SaturatedGrowthModel_FCN_[1, 2, 4]-lev_1.9-ww_3-hl_5-hu_200-n_[0, 10]-tl",SLvsML_simple/SGMultilevel\0-10
-"[0, 10]",SG,7.711197e-05,8.7498214e-05,1,3X5,"FBPINN_SG_SaturatedGrowthModel_FCN_[1]-lev_1.9-ww_3-hl_5-hu_200-n_[0, 10]-tl",SLvsML_simple/SGMultilevel\0-10
-"[10, 24]",SG,5.576625e-05,0.0152713405,2,3X5,"FBPINN_SG_SaturatedGrowthModel_FCN_[1, 2]-lev_1.9-ww_3-hl_5-hu_200-n_[10, 24]-tl",SLvsML_simple/SGMultilevel\10-24
-"[10, 24]",SG,3.5747468e-07,0.0003400289,1,3X5,"FBPINN_SG_SaturatedGrowthModel_FCN_[1]-lev_1.9-ww_3-hl_5-hu_200-n_[10, 24]-tl",SLvsML_simple/SGMultilevel\10-24
-"[10, 24]",SG,7.1653735e-06,0.00025372402,3,3X5,"FBPINN_SG_SaturatedGrowthModel_FCN_[1, 2, 4]-lev_1.9-ww_3-hl_5-hu_200-n_[10, 24]-tl",SLvsML_simple/SGMultilevel\10-24
-"[10, 24]",SG,3.5747468e-07,0.0003400289,1,3X5,"FBPINN_SG_SaturatedGrowthModel_FCN_[1]-lev_1.9-ww_3-hl_5-hu_200-n_[10, 24]-tl",SLvsML_simple/SGMultilevel\10-24
-"[0, 24]",SG,0.000121403966,0.00013351193,2,3X5,"FBPINN_SG_SaturatedGrowthModel_FCN_[1, 2]-lev_1.9-ww_3-hl_5-hu_200-n_[0, 24]-tl",SLvsML_simple/SGMultilevel\0-24
-"[0, 24]",SG,7.327083e-05,0.00016563018,1,3X5,"FBPINN_SG_SaturatedGrowthModel_FCN_[1]-lev_1.9-ww_3-hl_5-hu_200-n_[0, 24]-tl",SLvsML_simple/SGMultilevel\0-24
-"[0, 24]",SG,1.1016877e-05,7.0066264e-05,3,3X5,"FBPINN_SG_SaturatedGrowthModel_FCN_[1, 2, 4]-lev_1.9-ww_3-hl_5-hu_200-n_[0, 24]-tl",SLvsML_simple/SGMultilevel\0-24
-"[0, 24]",SG,7.327083e-05,0.00016563018,1,3X5,"FBPINN_SG_SaturatedGrowthModel_FCN_[1]-lev_1.9-ww_3-hl_5-hu_200-n_[0, 24]-tl",SLvsML_simple/SGMultilevel\0-24
-"[0, 10]",Surv,0.00022828425,0.00020908685,2,3X5,"FBPINN_Surv_CompetitionModel_FCN_[1, 2]-lev_1.9-ww_3-hl_5-hu_200-n_[0, 10]-tl",SLvsML_simple/SurvMultilevel\0-10
-"[0, 10]",Surv,0.00010907115,9.46688e-05,1,3X5,"FBPINN_Surv_CompetitionModel_FCN_[1]-lev_1.9-ww_3-hl_5-hu_200-n_[0, 10]-tl",SLvsML_simple/SurvMultilevel\0-10
-"[0, 10]",Surv,0.00021599386,0.0001498042,3,3X5,"FBPINN_Surv_CompetitionModel_FCN_[1, 2, 4]-lev_1.9-ww_3-hl_5-hu_200-n_[0, 10]-tl",SLvsML_simple/SurvMultilevel\0-10
-"[0, 10]",Surv,0.00010907115,9.46688e-05,1,3X5,"FBPINN_Surv_CompetitionModel_FCN_[1]-lev_1.9-ww_3-hl_5-hu_200-n_[0, 10]-tl",SLvsML_simple/SurvMultilevel\0-10
-"[10, 24]",Surv,0.018570203,0.01858638,2,3X5,"FBPINN_Surv_CompetitionModel_FCN_[1, 2]-lev_1.9-ww_3-hl_5-hu_200-n_[10, 24]-tl",SLvsML_simple/SurvMultilevel\10-24
-"[10, 24]",Surv,0.012760791,0.013076484,1,3X5,"FBPINN_Surv_CompetitionModel_FCN_[1]-lev_1.9-ww_3-hl_5-hu_200-n_[10, 24]-tl",SLvsML_simple/SurvMultilevel\10-24
-"[10, 24]",Surv,0.059088435,0.059182476,3,3X5,"FBPINN_Surv_CompetitionModel_FCN_[1, 2, 4]-lev_1.9-ww_3-hl_5-hu_200-n_[10, 24]-tl",SLvsML_simple/SurvMultilevel\10-24
-"[10, 24]",Surv,0.012760791,0.013076484,1,3X5,"FBPINN_Surv_CompetitionModel_FCN_[1]-lev_1.9-ww_3-hl_5-hu_200-n_[10, 24]-tl",SLvsML_simple/SurvMultilevel\10-24
-"[0, 24]",Surv,7.1737384e-05,0.00011261987,2,3X5,"FBPINN_Surv_CompetitionModel_FCN_[1, 2]-lev_1.9-ww_3-hl_5-hu_200-n_[0, 24]-tl",SLvsML_simple/SurvMultilevel\0-24
-"[0, 24]",Surv,0.000105298706,0.00010992179,1,3X5,"FBPINN_Surv_CompetitionModel_FCN_[1]-lev_1.9-ww_3-hl_5-hu_200-n_[0, 24]-tl",SLvsML_simple/SurvMultilevel\0-24
-"[0, 24]",Surv,0.00022976709,0.00011942063,3,3X5,"FBPINN_Surv_CompetitionModel_FCN_[1, 2, 4]-lev_1.9-ww_3-hl_5-hu_200-n_[0, 24]-tl",SLvsML_simple/SurvMultilevel\0-24
-"[0, 24]",Surv,0.000105298706,0.00010992179,1,3X5,"FBPINN_Surv_CompetitionModel_FCN_[1]-lev_1.9-ww_3-hl_5-hu_200-n_[0, 24]-tl",SLvsML_simple/SurvMultilevel\0-24
-"[0, 10]",Coex,0.00040667836,0.0004280785,2,3X5,"FBPINN_Coex_CompetitionModel_FCN_[1, 2]-lev_1.9-ww_3-hl_5-hu_200-n_[0, 10]-tl",SLvsML_simple/CoexMultilevel\0-10
-"[0, 10]",Coex,0.00068749563,0.00073848164,1,3X5,"FBPINN_Coex_CompetitionModel_FCN_[1]-lev_1.9-ww_3-hl_5-hu_200-n_[0, 10]-tl",SLvsML_simple/CoexMultilevel\0-10
-"[0, 10]",Coex,0.0023066176,0.0012039843,3,3X5,"FBPINN_Coex_CompetitionModel_FCN_[1, 2, 4]-lev_1.9-ww_3-hl_5-hu_200-n_[0, 10]-tl",SLvsML_simple/CoexMultilevel\0-10
-"[0, 10]",Coex,0.00068749563,0.00073848164,1,3X5,"FBPINN_Coex_CompetitionModel_FCN_[1]-lev_1.9-ww_3-hl_5-hu_200-n_[0, 10]-tl",SLvsML_simple/CoexMultilevel\0-10
-"[10, 24]",Coex,0.0008028509,0.00081825594,2,3X5,"FBPINN_Coex_CompetitionModel_FCN_[1, 2]-lev_1.9-ww_3-hl_5-hu_200-n_[10, 24]-tl",SLvsML_simple/CoexMultilevel\10-24
-"[10, 24]",Coex,0.0035097657,0.003518381,1,3X5,"FBPINN_Coex_CompetitionModel_FCN_[1]-lev_1.9-ww_3-hl_5-hu_200-n_[10, 24]-tl",SLvsML_simple/CoexMultilevel\10-24
-"[10, 24]",Coex,0.00040460879,0.00048122753,3,3X5,"FBPINN_Coex_CompetitionModel_FCN_[1, 2, 4]-lev_1.9-ww_3-hl_5-hu_200-n_[10, 24]-tl",SLvsML_simple/CoexMultilevel\10-24
-"[10, 24]",Coex,0.0035097657,0.003518381,1,3X5,"FBPINN_Coex_CompetitionModel_FCN_[1]-lev_1.9-ww_3-hl_5-hu_200-n_[10, 24]-tl",SLvsML_simple/CoexMultilevel\10-24
-"[0, 24]",Coex,0.00014050471,0.00014796776,2,3X5,"FBPINN_Coex_CompetitionModel_FCN_[1, 2]-lev_1.9-ww_3-hl_5-hu_200-n_[0, 24]-tl",SLvsML_simple/CoexMultilevel\0-24
-"[0, 24]",Coex,5.933434e-05,0.00013916925,1,3X5,"FBPINN_Coex_CompetitionModel_FCN_[1]-lev_1.9-ww_3-hl_5-hu_200-n_[0, 24]-tl",SLvsML_simple/CoexMultilevel\0-24
-"[0, 24]",Coex,0.000116041636,0.00015514849,3,3X5,"FBPINN_Coex_CompetitionModel_FCN_[1, 2, 4]-lev_1.9-ww_3-hl_5-hu_200-n_[0, 24]-tl",SLvsML_simple/CoexMultilevel\0-24
-"[0, 24]",Coex,5.933434e-05,0.00013916925,1,3X5,"FBPINN_Coex_CompetitionModel_FCN_[1]-lev_1.9-ww_3-hl_5-hu_200-n_[0, 24]-tl",SLvsML_simple/CoexMultilevel\0-24
+"[0, 10]",SG,0.00031156142,0.00023259645,2,3X5,"FBPINN_SG_SaturatedGrowthModel_FCN_[1, 2]-lev_1.9-ww_3-hl_5-hu_200-n_[0, 10]-tl",MLDDVsSLDD/SGMultilevel\0-10
+"[10, 24]",SG,5.700751e-05,0.01470811,2,3X5,"FBPINN_SG_SaturatedGrowthModel_FCN_[1, 2]-lev_1.9-ww_3-hl_5-hu_200-n_[10, 24]-tl",MLDDVsSLDD/SGMultilevel\10-24
+"[0, 24]",SG,0.000121403966,0.00013351193,2,3X5,"FBPINN_SG_SaturatedGrowthModel_FCN_[1, 2]-lev_1.9-ww_3-hl_5-hu_200-n_[0, 24]-tl",MLDDVsSLDD/SGMultilevel\0-24
+"[0, 10]",SG,7.6331184e-05,9.1575595e-05,1,3X5,"FBPINN_SG_SaturatedGrowthModel_FCN_[1]-lev_1.9-ww_3-hl_5-hu_200-n_[0, 10]-tl",MLDDVsSLDD/SGMultilevel\0-10
+"[10, 24]",SG,3.167589e-07,0.00031634123,1,3X5,"FBPINN_SG_SaturatedGrowthModel_FCN_[1]-lev_1.9-ww_3-hl_5-hu_200-n_[10, 24]-tl",MLDDVsSLDD/SGMultilevel\10-24
+"[0, 24]",SG,7.327083e-05,0.00016563018,1,3X5,"FBPINN_SG_SaturatedGrowthModel_FCN_[1]-lev_1.9-ww_3-hl_5-hu_200-n_[0, 24]-tl",MLDDVsSLDD/SGMultilevel\0-24
+"[0, 10]",Surv,0.00022869285,0.00020890876,2,3X5,"FBPINN_Surv_CompetitionModel_FCN_[1, 2]-lev_1.9-ww_3-hl_5-hu_200-n_[0, 10]-tl",MLDDVsSLDD/SurvMultilevel\0-10
+"[10, 24]",Surv,0.017431248,0.017406056,2,3X5,"FBPINN_Surv_CompetitionModel_FCN_[1, 2]-lev_1.9-ww_3-hl_5-hu_200-n_[10, 24]-tl",MLDDVsSLDD/SurvMultilevel\10-24
+"[0, 24]",Surv,7.1737384e-05,0.00011261987,2,3X5,"FBPINN_Surv_CompetitionModel_FCN_[1, 2]-lev_1.9-ww_3-hl_5-hu_200-n_[0, 24]-tl",MLDDVsSLDD/SurvMultilevel\0-24
+"[0, 10]",Surv,0.000103773804,9.370735e-05,1,3X5,"FBPINN_Surv_CompetitionModel_FCN_[1]-lev_1.9-ww_3-hl_5-hu_200-n_[0, 10]-tl",MLDDVsSLDD/SurvMultilevel\0-10
+"[10, 24]",Surv,0.012648441,0.012951058,1,3X5,"FBPINN_Surv_CompetitionModel_FCN_[1]-lev_1.9-ww_3-hl_5-hu_200-n_[10, 24]-tl",MLDDVsSLDD/SurvMultilevel\10-24
+"[0, 24]",Surv,0.000105298706,0.00010992179,1,3X5,"FBPINN_Surv_CompetitionModel_FCN_[1]-lev_1.9-ww_3-hl_5-hu_200-n_[0, 24]-tl",MLDDVsSLDD/SurvMultilevel\0-24
+"[0, 10]",Coex,0.0003921361,0.00040864016,2,3X5,"FBPINN_Coex_CompetitionModel_FCN_[1, 2]-lev_1.9-ww_3-hl_5-hu_200-n_[0, 10]-tl",MLDDVsSLDD/CoexMultilevel\0-10
+"[10, 24]",Coex,0.0008029187,0.0008291464,2,3X5,"FBPINN_Coex_CompetitionModel_FCN_[1, 2]-lev_1.9-ww_3-hl_5-hu_200-n_[10, 24]-tl",MLDDVsSLDD/CoexMultilevel\10-24
+"[0, 24]",Coex,0.00014050471,0.00014796776,2,3X5,"FBPINN_Coex_CompetitionModel_FCN_[1, 2]-lev_1.9-ww_3-hl_5-hu_200-n_[0, 24]-tl",MLDDVsSLDD/CoexMultilevel\0-24
+"[0, 10]",Coex,0.00069195667,0.000738339,1,3X5,"FBPINN_Coex_CompetitionModel_FCN_[1]-lev_1.9-ww_3-hl_5-hu_200-n_[0, 10]-tl",MLDDVsSLDD/CoexMultilevel\0-10
+"[10, 24]",Coex,0.0034889865,0.0034952303,1,3X5,"FBPINN_Coex_CompetitionModel_FCN_[1]-lev_1.9-ww_3-hl_5-hu_200-n_[10, 24]-tl",MLDDVsSLDD/CoexMultilevel\10-24
+"[0, 24]",Coex,5.933434e-05,0.00013916925,1,3X5,"FBPINN_Coex_CompetitionModel_FCN_[1]-lev_1.9-ww_3-hl_5-hu_200-n_[0, 24]-tl",MLDDVsSLDD/CoexMultilevel\0-24

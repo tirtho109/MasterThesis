@@ -130,7 +130,7 @@ def submit(runs):
             #     run.plot()
             else:
                 raise ValueError(f"Unknown run type: {run_type}")
-        print(df.head(100))
+        # print(df.head(100))
         # export the df to csv
         file_path = ("MLDDVsSLDD/summary.csv")
         df.to_csv(file_path, index=False)
@@ -245,11 +245,12 @@ n_test = (500,)
 # variable parameters
 time_limits = [[0,10], [10, 24], [0,24]]
 hs = [3]
-ls = [2, 3]
+ls = [2]
 ws = [1.9]
 ps = [5]
 p0 = [2, 1.9, 5]
 nsub = 2 # number of subdomains for single level test
+w_noDataRegion = 1.0005
 
 parentdir = ""
 ## Test 1: simple SG model
@@ -268,15 +269,29 @@ for time_limit in time_limits:
             rootdir = os.path.join(parentdir, rootdir)
             # multilevel scaling
             l = [2**i for i in range(l_)]
-            subdomain_xss = [[np.array([12.]),]] + [get_subdomain_xsws(time_limit=time_limit, t_begin=0, t_end=24, num_subdomain=subs, ww=w, w_noDataRegion=1.005)[0] for subs in l[1:]]
-            subdomain_wss = [[np.array([24.]),]] + [get_subdomain_xsws(time_limit=time_limit, t_begin=0, t_end=24, num_subdomain=subs, ww=w, w_noDataRegion=1.005)[1] for subs in l[1:]]
+            subdomain_xss = [[np.array([12.]),]] + [get_subdomain_xsws(time_limit=time_limit, t_begin=0, t_end=24, num_subdomain=subs, ww=w, w_noDataRegion=w_noDataRegion)[0] for subs in l[1:]]
+            subdomain_wss = [[np.array([24.]),]] + [get_subdomain_xsws(time_limit=time_limit, t_begin=0, t_end=24, num_subdomain=subs, ww=w, w_noDataRegion=w_noDataRegion)[1] for subs in l[1:]]
             layer_sizes = [1,] + [p,]*h + [1,]
             runs.append(run_FBPINN(tag, rootdir))
             # single level with 2 subdomain
-            subdomain_xs, subdomain_ws = get_subdomain_xsws(time_limit, t_begin=0, 
-                                                    t_end=24, num_subdomain=nsub,
-                                                    ww = w, w_noDataRegion=1.005)
-            runs.append(run_FBPINN_single_level(tag, rootdir))
+            # subdomain_xs, subdomain_ws = get_subdomain_xsws(time_limit, t_begin=0, 
+            #                                         t_end=24, num_subdomain=nsub,
+            #                                         ww = w, w_noDataRegion=w_noDataRegion)
+            # runs.append(run_FBPINN_single_level(tag, rootdir))
+
+for time_limit in time_limits:
+    problem = SaturatedGrowthModel
+    problem_init_kwargs = dict(C=1, u0=0.01, sd=0.1,
+                                time_limit=time_limit, numx=numx,
+                                lambda_phy=1e0, lambda_data=1e0,
+                                sparse=sparse, noise_level=noise_level)
+    rootdir = f"{time_limit[0]}-{time_limit[1]}"
+    rootdir = os.path.join(parentdir, rootdir)
+    # single level with 2 subdomain
+    subdomain_xs, subdomain_ws = get_subdomain_xsws(time_limit, t_begin=0, 
+                                            t_end=24, num_subdomain=nsub,
+                                            ww = ws[0], w_noDataRegion=w_noDataRegion)
+    runs.append(run_FBPINN_single_level(tag, rootdir))
 
 
 
@@ -300,15 +315,29 @@ for time_limit in time_limits:
             rootdir = os.path.join(parentdir, rootdir)
             # multilevel scaling
             l = [2**i for i in range(l_)]
-            subdomain_xss = [[np.array([12.]),]] + [get_subdomain_xsws(time_limit=time_limit, t_begin=0, t_end=24, num_subdomain=subs, ww=w, w_noDataRegion=1.005)[0] for subs in l[1:]]
-            subdomain_wss = [[np.array([24.]),]] + [get_subdomain_xsws(time_limit=time_limit, t_begin=0, t_end=24, num_subdomain=subs, ww=w, w_noDataRegion=1.005)[1] for subs in l[1:]]
+            subdomain_xss = [[np.array([12.]),]] + [get_subdomain_xsws(time_limit=time_limit, t_begin=0, t_end=24, num_subdomain=subs, ww=w, w_noDataRegion=w_noDataRegion)[0] for subs in l[1:]]
+            subdomain_wss = [[np.array([24.]),]] + [get_subdomain_xsws(time_limit=time_limit, t_begin=0, t_end=24, num_subdomain=subs, ww=w, w_noDataRegion=w_noDataRegion)[1] for subs in l[1:]]
             layer_sizes = [1,] + [p,]*h + [2,]
             runs.append(run_FBPINN(tag, rootdir))
             # single level with 2 subdomain
-            subdomain_xs, subdomain_ws = get_subdomain_xsws(time_limit, t_begin=0, 
-                                                    t_end=24, num_subdomain=nsub,
-                                                    ww = w, w_noDataRegion=1.005)
-            runs.append(run_FBPINN_single_level(tag, rootdir))
+            # subdomain_xs, subdomain_ws = get_subdomain_xsws(time_limit, t_begin=0, 
+            #                                         t_end=24, num_subdomain=nsub,
+            #                                         ww = w, w_noDataRegion=w_noDataRegion)
+            # runs.append(run_FBPINN_single_level(tag, rootdir))
+
+for time_limit in time_limits:
+    problem = CompetitionModel
+    problem_init_kwargs = dict(params=survival_params, u0=2, v0=1, sd=0.1,
+                                time_limit=time_limit, numx=numx,
+                                lambda_phy=1e0, lambda_data=1e0,
+                                sparse=sparse, noise_level=noise_level)
+    rootdir = f"{time_limit[0]}-{time_limit[1]}"
+    rootdir = os.path.join(parentdir, rootdir)
+    # single level with 2 subdomain
+    subdomain_xs, subdomain_ws = get_subdomain_xsws(time_limit, t_begin=0, 
+                                            t_end=24, num_subdomain=nsub,
+                                            ww = ws[0], w_noDataRegion=w_noDataRegion)
+    runs.append(run_FBPINN_single_level(tag, rootdir))
 
 ####################################################################################################################
 ######################################### # Test 3: Competition Model(coexistence) #################################
@@ -329,15 +358,28 @@ for time_limit in time_limits:
             rootdir = os.path.join(parentdir, rootdir)
             # multilevel scaling
             l = [2**i for i in range(l_)]
-            subdomain_xss = [[np.array([12.]),]] + [get_subdomain_xsws(time_limit=time_limit, t_begin=0, t_end=24, num_subdomain=subs, ww=w, w_noDataRegion=1.005)[0] for subs in l[1:]]
-            subdomain_wss = [[np.array([24.]),]] + [get_subdomain_xsws(time_limit=time_limit, t_begin=0, t_end=24, num_subdomain=subs, ww=w, w_noDataRegion=1.005)[1] for subs in l[1:]]
+            subdomain_xss = [[np.array([12.]),]] + [get_subdomain_xsws(time_limit=time_limit, t_begin=0, t_end=24, num_subdomain=subs, ww=w, w_noDataRegion=w_noDataRegion)[0] for subs in l[1:]]
+            subdomain_wss = [[np.array([24.]),]] + [get_subdomain_xsws(time_limit=time_limit, t_begin=0, t_end=24, num_subdomain=subs, ww=w, w_noDataRegion=w_noDataRegion)[1] for subs in l[1:]]
             layer_sizes = [1,] + [p,]*h + [2,]
             runs.append(run_FBPINN(tag, rootdir))
             # single level with 2 subdomain
-            subdomain_xs, subdomain_ws = get_subdomain_xsws(time_limit, t_begin=0, 
-                                                    t_end=24, num_subdomain=nsub,
-                                                    ww = w, w_noDataRegion=1.005)
-            runs.append(run_FBPINN_single_level(tag, rootdir))
+            # subdomain_xs, subdomain_ws = get_subdomain_xsws(time_limit, t_begin=0, 
+            #                                         t_end=24, num_subdomain=nsub,
+            #                                         ww = w, w_noDataRegion=w_noDataRegion)
+            # runs.append(run_FBPINN_single_level(tag, rootdir))
+for time_limit in time_limits:
+    problem = CompetitionModel
+    problem_init_kwargs = dict(params=coexistence_params, u0=2, v0=1, sd=0.1,
+                                time_limit=time_limit, numx=numx,
+                                lambda_phy=1e0, lambda_data=1e0,
+                                sparse=sparse, noise_level=noise_level)
+    rootdir = f"{time_limit[0]}-{time_limit[1]}"
+    rootdir = os.path.join(parentdir, rootdir)
+    # single level with 2 subdomain
+    subdomain_xs, subdomain_ws = get_subdomain_xsws(time_limit, t_begin=0, 
+                                            t_end=24, num_subdomain=nsub,
+                                            ww = ws[0], w_noDataRegion=w_noDataRegion)
+    runs.append(run_FBPINN_single_level(tag, rootdir))
 
 if __name__ == "__main__":
 
