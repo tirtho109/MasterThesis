@@ -59,7 +59,7 @@ def plot_DDD_varying_DataPoints():
     sampler='grid'
 
     # Varying parameters
-    numxs = np.arange(10, 101, 10)
+    numxs = np.arange(20, 101, 20)
     # array([ 10,  20,  30,  40,  50,  60,  70,  80,  90, 100])
     time_limits = [[0,10], [10,24], [0, 24]]
 
@@ -74,6 +74,9 @@ def plot_DDD_varying_DataPoints():
     parentdir = "DDD_DataPoints"
     rootdirs = ["DDD_DataPoints_sg", "DDD_DataPoints_coexistence", "DDD_DataPoints_survival"]
     rootdirs_with_parent = [os.path.join(parentdir, rd) for rd in rootdirs]
+
+    # collector dataframes
+    collcted_df = pd.DataFrame(columns=['Time Limit', 'Data Points', 'MSE Learned', 'MSE Test', 'Model Type', 'Learned Parameters'])
 
     for (layer, problem, params, rootdir, name) in zip(layers, problem_types, params_type, rootdirs_with_parent, cases):
     
@@ -267,6 +270,24 @@ def plot_DDD_varying_DataPoints():
             new_row = pd.DataFrame({'Time Limit': [tl_key], 'Data Points': [data_points],
                                 'MSE Learned': [mse_learned], 'MSE Test': [mse_test]})
             df = pd.concat([df, new_row], ignore_index=True)
+
+            # extract parameters
+            parameters_csv_pattern = os.path.join(rootdir+f"/summaries/{run}/", "parameters.csv")
+            parameters = pd.read_csv(parameters_csv_pattern)
+            
+            true_params = parameters['True'].tolist()
+            learned_params = parameters['Learned'].tolist()
+            if len(true_params)==1:
+                true_params = true_params[0]
+                learned_params = learned_params[0]
+            else:
+                true_params = np.array(true_params)
+                learned_params = np.array(learned_params)
+            new_collcected_row = pd.DataFrame({'Time Limit': [tl_key], 'Data Points': [data_points],
+                                'MSE Learned': [mse_learned], 'MSE Test': [mse_test],
+                                'Model Type': [name], 'Learned Parameters': [learned_params]})
+            collcted_df = pd.concat([collcted_df, new_collcected_row], ignore_index=True)
+        
         
         df['MSE Learned'] = pd.to_numeric(df['MSE Learned'], errors='coerce')
         df['MSE Test'] = pd.to_numeric(df['MSE Test'], errors='coerce')
@@ -334,6 +355,9 @@ def plot_DDD_varying_DataPoints():
         plt.tight_layout()
         file_path = f"{parentdir}/MSE_varying_DataPoints({name}).png"
         plt.savefig(file_path)
+
+        # export collected data
+        collcted_df.to_csv(f"{parentdir}/FBPINN_collected_info_varying_DataPOints.csv", index=False)
 
         print("DONE")
 

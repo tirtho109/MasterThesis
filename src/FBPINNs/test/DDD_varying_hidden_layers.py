@@ -78,6 +78,9 @@ def plot_DDD_varying_hidden_layers():
     parentdir = "DDD_varying_layers"
     rootdirs = ["DDD_varying_layers_sg", "DDD_varying_layers_coexistence", "DDD_varying_layers_survival"]
     rootdirs_with_parent = [os.path.join(parentdir, rd) for rd in rootdirs]
+
+    # collector dataframes
+    collcted_df = pd.DataFrame(columns=['Time Limit', 'Hidden Layers', 'MSE Learned', 'MSE Test', 'Model Type', 'Learned Parameters'])
     
     for (layers, problem, params, rootdir, name) in zip(layer_configs, problem_types, params_type, rootdirs_with_parent, cases):
         #step 1
@@ -284,6 +287,26 @@ def plot_DDD_varying_hidden_layers():
             new_row = pd.DataFrame({'Time Limit': [tl_key], 'Layer': [layer],
                                 'MSE Learned': [mse_learned], 'MSE Test': [mse_test]})
             df = pd.concat([df, new_row], ignore_index=True)
+
+            # extract parameters
+            parameters_csv_pattern = os.path.join(rootdir+f"/summaries/{run}/", "parameters.csv")
+            parameters = pd.read_csv(parameters_csv_pattern)
+            
+            true_params = parameters['True'].tolist()
+            learned_params = parameters['Learned'].tolist()
+            if len(true_params)==1:
+                true_params = true_params[0]
+                learned_params = learned_params[0]
+            else:
+                true_params = np.array(true_params)
+                learned_params = np.array(learned_params)
+            l = c_out.network_init_kwargs["layer_size"]
+            h = len(l) - 2
+            p = l[1]
+            new_collcected_row = pd.DataFrame({'Time Limit': [tl_key], 'Hidden Layers': [f"{h}x{p}"],
+                                'MSE Learned': [mse_learned], 'MSE Test': [mse_test],
+                                'Model Type': [name], 'Learned Parameters': [learned_params]})
+            collcted_df = pd.concat([collcted_df, new_collcected_row], ignore_index=True)
         
         ax2.legend(ncol=3, bbox_to_anchor=(0.5, -0.2), 
                       loc='upper center', fontsize='small')
@@ -351,6 +374,9 @@ def plot_DDD_varying_hidden_layers():
         plt.tight_layout()
         file_path = f"{parentdir}/MSE_varying_hidden_layers({name}).png"
         plt.savefig(file_path)
+
+        # export collected data
+        collcted_df.to_csv(f"{parentdir}/FBPINN_collected_info_varying_HL.csv", index=False)
 
         print("DONE")
 

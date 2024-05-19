@@ -57,7 +57,7 @@ def plot_DDD_number_of_subdomain():
     sampler='grid'
 
     # Varying parameters
-    nsubs = np.arange(2,11,1) # Number of subdomain
+    nsubs = np.arange(2,11,2) # Number of subdomain
     time_limits = [[0,10], [10,24], [0, 24]]
 
     # type of problem and other fix params

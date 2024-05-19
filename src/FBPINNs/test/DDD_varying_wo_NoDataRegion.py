@@ -58,7 +58,7 @@ def plot_DDD_varying_wo_NoDataRegion():
     sampler='grid'
 
     # Varying Parameters
-    wis = [1.0005, 1.1, 1.3, 1.5, 1.7, 1.9, 2.1]
+    wis = [1.0005, 1.1, 1.5, 1.9, 2.3]
     time_limits = [[0,10], [10,24]]
 
     # type of problem and other fix params

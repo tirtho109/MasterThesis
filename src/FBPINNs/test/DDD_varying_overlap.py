@@ -58,8 +58,8 @@ def plot_DDD_varying_overlap():
     sampler='grid'
 
     # Varying parameters
-    # wos =[1.1, 1.5, 1.9, 2.3, 2.7]
-    wos =[1.1, 1.3, 1.5, 1.7, 1.9, 2.1, 2.3, 2.5, 2.7, 2.9]
+    wos =[1.1, 1.5, 1.9, 2.3, 2.7]
+    # wos =[1.1, 1.3, 1.5, 1.7, 1.9, 2.1, 2.3, 2.5, 2.7, 2.9]
     time_limits = [[0,10], [10,24], [0, 24]]
 
     # type of problem and other fix params
