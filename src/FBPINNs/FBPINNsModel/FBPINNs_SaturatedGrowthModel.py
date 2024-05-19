@@ -31,7 +31,7 @@ def get_parser():
     parser.add_argument('-ic', '--initial_conditions', help='Initial conditions for the model (default 0.01)', type=float, default=0.01)
     parser.add_argument('--tend', help='End time for the model simulation (default 24)', type=int, default=24)
     parser.add_argument('--tbegin', help='Begin time for the model simulation (default 0)', type=int, default=0)
-    parser.add_argument('-nx','--numx', help='Number of data points (default 50)', type=int, default=50)
+    parser.add_argument('-nx','--numx', help='Number of data points (default 50)', type=int, default=100)
     parser.add_argument('-tl', '--time_limit', help='Time window for the training data (default [0, 24])', type=int, nargs=2, default=[0, 24])
 
     parser.add_argument('-nsub','--num_subdomain', help='Number of sub-domains (default 2)', type=int, default=2)
@@ -43,7 +43,7 @@ def get_parser():
     parser.add_argument('-l', '--layers', help='Num layers and neurons (default 2 layers [1, 5, 5, 5, 1])', type=int, nargs='+', default=[1, 5, 5, 5, 1])
     parser.add_argument('-pl', '--pinns_layers', help='Num of pinns layers and neurons (default 3 layers [1, 5, 5, 5, 1])', type=int, nargs='+', default=[1, 5, 5, 5, 1])
     parser.add_argument('-lp','--lambda_phy', help='Weight for physics loss (default 1e0)', type=float, default=1e0)
-    parser.add_argument('-ld','--lambda_data', help='Weight for data loss (default 1e6)', type=float, default=1e6)
+    parser.add_argument('-ld','--lambda_data', help='Weight for data loss (default 1e0)', type=float, default=1e0)
 
     parser.add_argument('-nc','--num_collocation', help='Number of collocation points (default 2000)', type=int, default=200)
     parser.add_argument('--sampler', help='Collocation sampler, one of ["grid", "uniform", "sobol", "halton"] (default: "grid")', type=str, nargs=1, default=['grid'])
@@ -54,8 +54,8 @@ def get_parser():
     parser.add_argument('--tag', type=str, default='ablation', help='Tag for identifying the run (default: "ablation")')
     parser.add_argument('--sparse', help='Sparsity of training data (default False)', type=bool, nargs=1, default=[False])
     parser.add_argument('--loss_landscape', help='Whether to plot loss_landscape for FBPINNs (default False)', type=bool, nargs=1, default=[False])
-    parser.add_argument('-nl','--noise_level', help='Noise level in training data (default 0.005)', type=float, default=0.005)
-    parser.add_argument('-pt','--pinn_trainer', help='Whether to train PINN trainer (default Faöse)', type=bool, nargs=1, default=[False])
+    parser.add_argument('-nl','--noise_level', help='Noise level in training data (default 0.05)', type=float, default=0.05)
+    parser.add_argument('-pt','--pinn_trainer', help='Whether to train PINN trainer (default False)', type=bool, nargs=1, default=[False])
     
     return parser
 
@@ -117,7 +117,7 @@ def train_sg_model():
     h = len(args.layers) - 2  # Number of hidden layers
     p = sum(args.layers[1:-1])  # Sum of neurons in hidden layers
     n = (args.num_collocation,) # number of training point(collocation)
-    run = f"FBPINN_{tag}_SG_{network.__name__}_{args.num_subdomain}-ns_{args.window_overlap}-ol_{h}-l_{p}-h_{n[0]}-nC_"
+    run = f"FBPINN_{tag}_SG_{network.__name__}_{args.num_subdomain}-ns_{args.window_overlap}-l_{h}-l_{p}-h_{n[0]}-nC_"
     run += f"{args.epochs}-e_{args.numx}-nD_{args.time_limit}-tl_{args.num_test}-nT_{args.initial_conditions}-ic_"
     run += f"{args.sparse[0]}-sp_{args.noise_level}-nl_"
 
