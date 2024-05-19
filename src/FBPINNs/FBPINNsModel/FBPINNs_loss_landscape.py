@@ -7,6 +7,11 @@ from fbpinns.trainers import FBPINNTrainer
 from fbpinns.analysis import load_model
 from copy import deepcopy
 
+"""
+The idea of Loss Landscape is inspired by the following paper: https://arxiv.org/pdf/1712.09913
+And the coding strategy is inspired by the following code: https://github.com/sciann/sciann/blob/master/sciann/utils/callbacks.py
+"""
+
 def get_loss(fbpinn_trainer, c, all_params, active, all_opt_states, i):
     key = random.PRNGKey(c.seed)
     domain, problem, decomposition, network = c.domain, c.problem, c.decomposition, c.network
