@@ -42,7 +42,7 @@ class SaturatedGrowthModel(Problem):
             "noise_level":noise_level,
         }
         trainable_params = {
-            "C":jnp.array(0.), # learn C from constraints
+            "C":jnp.array(0.5), # learn C from constraints
         }
         
         return static_params, trainable_params
@@ -151,11 +151,11 @@ class CompetitionModel(Problem):
             "noise_level":noise_level,
         }
         trainable_params = {
-            "r":jnp.array(0.),
-            "a1":jnp.array(0.),
-            "a2":jnp.array(0.),
-            "b1":jnp.array(0.),
-            "b2":jnp.array(0.),
+            "r":jnp.array(0.5),
+            "a1":jnp.array(0.5),
+            "a2":jnp.array(0.5),
+            "b1":jnp.array(0.5),
+            "b2":jnp.array(0.5),
         }
         return static_params, trainable_params
     
