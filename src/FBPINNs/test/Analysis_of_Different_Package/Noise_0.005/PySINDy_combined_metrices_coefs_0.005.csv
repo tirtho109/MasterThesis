@@ -1,0 +1,10 @@
+tag,model_type,Noise,Numx,Time_limit,Differentiation Type,MSE,Coefficients
+PySINDy,coexistence,0.005,100,"[0, 10]",SFD,0.0059340641168186,"{'alpha_1': 1.1, 'alpha_2': -0.0, 'alpha_3': -1.2124, 'alpha_4': -0.0179, 'alpha_5': -0.0, 'beta_1': -0.0, 'beta_2': 16.4819, 'beta_3': 0.0, 'beta_4': -4.8473, 'beta_5': -10.487}"
+PySINDy,coexistence,0.005,100,"[0, 24]",SFD,0.0027750351319079,"{'alpha_1': 0.94, 'alpha_2': 0.0, 'alpha_3': -0.8242, 'alpha_4': -0.1669, 'alpha_5': -0.0, 'beta_1': 0.0, 'beta_2': 1.3227, 'beta_3': 0.0, 'beta_4': -0.4634, 'beta_5': -0.7358}"
+PySINDy,coexistence,0.005,100,"[10, 24]",FD,0.0072310609156476,"{'alpha_1': 0.78, 'alpha_2': 0.0, 'alpha_3': -0.292, 'alpha_4': -0.4348, 'alpha_5': 0.0, 'beta_1': -0.0, 'beta_2': 0.61, 'beta_3': 0.0, 'beta_4': -0.0026, 'beta_5': -0.5145}"
+PySINDy,sg,0.005,100,"[0, 10]",FD,9.888052408664476e-05,"{'alpha_1': 0.9781, 'alpha_2': -0.97}"
+PySINDy,sg,0.005,100,"[0, 24]",SFD,1.3706151132120016e-05,"{'alpha_1': 0.9908, 'alpha_2': -0.99}"
+PySINDy,sg,0.005,100,"[10, 24]",FD,2.020029041601844e-05,"{'alpha_1': 0.9957, 'alpha_2': -1.0}"
+PySINDy,survival,0.005,100,"[0, 10]",FD,0.002193397013635,"{'alpha_1': 0.8, 'alpha_2': -0.0, 'alpha_3': -0.2455, 'alpha_4': -0.4519, 'alpha_5': 0.0, 'beta_1': -0.0, 'beta_2': -0.0338, 'beta_3': 0.0, 'beta_4': -0.1768, 'beta_5': 0.1003}"
+PySINDy,survival,0.005,100,"[0, 24]",FD,0.0004268798839737,"{'alpha_1': 0.82, 'alpha_2': 0.0, 'alpha_3': -0.2472, 'alpha_4': -0.462, 'alpha_5': 0.0, 'beta_1': 0.0, 'beta_2': -0.0137, 'beta_3': -0.0, 'beta_4': -0.1585, 'beta_5': 0.0528}"
+PySINDy,survival,0.005,100,"[10, 24]",SFD,0.0887293376025009,"{'alpha_1': 0.74, 'alpha_2': -0.0, 'alpha_3': -0.2214, 'alpha_4': -0.3961, 'alpha_5': 0.0, 'beta_1': 0.0, 'beta_2': -22.5315, 'beta_3': 0.0, 'beta_4': 6.7418, 'beta_5': 9.0051}"
