@@ -1,6 +1,6 @@
 """
-    To train: python varying_DataPoints.py --train True -e 50000 --gpu True
-    To plot: python varying_DataPoints.py -e 50000 --gpu True
+    To train: python varying_HiddenLayers.py --train True -e 50000 --gpu True
+    To plot: python varying_HiddenLayers.py -e 50000 --gpu True
 
 """
 
@@ -57,6 +57,9 @@ def plot_varying_HiddenLayers():
     time_limits = [[0,10], [10,24], [0, 24]]
     problem_types = [SaturatedGrowthModel, CompetitionModel, CompetitionModel]
     model_types = ["sg", "coexistence", "survival"]
+
+    # collector dataframes
+    collcted_df = pd.DataFrame(columns=['Time Limit', 'Hidden Layers', 'MSE Learned', 'MSE Test', 'Model Type', 'Learned Parameters'])
 
     # initialize the root directories
     rootdirs = []
@@ -177,6 +180,22 @@ def plot_varying_HiddenLayers():
                 new_row = pd.DataFrame({'Time Limit': [dir_time_limit_str], 'Layers': [l],
                                 'MSE Learned': [mse_learned], 'MSE Test': [mse_test]})
                 df = pd.concat([df, new_row], ignore_index=True)
+
+                if model_type == 'sg':
+                    # collect the file with file name 'res_C_learned'
+                    if 'res_C_learned' in filenames:
+                        param_learned = np.loadtxt(os.path.join(dirpath, 'res_C_learned'))
+                else:
+                    if 'res_learned_params' in filenames:
+                        param_learned = np.loadtxt(os.path.join(dirpath, 'res_learned_params'))
+
+                h = len(l)
+                p = l[0]
+                new_collcected_row = pd.DataFrame({'Time Limit': [dir_time_limit_str], 'Hidden Layers': [f"{h}x{p}"],
+                                'MSE Learned': [mse_learned], 'MSE Test': [mse_test], 'Model Type': [model_type], 'Learned Parameters': [param_learned]})
+                
+                collcted_df = pd.concat([collcted_df, new_collcected_row], ignore_index=True)
+        
         
         ax2.legend(ncol=3, bbox_to_anchor=(0.5, -0.2), 
                       loc='upper center', fontsize='small')
@@ -250,6 +269,9 @@ def plot_varying_HiddenLayers():
     
     training_time = time.time() - training_time
     print(f"Total training time: {training_time} seconds")
+
+    # save collected df
+    collcted_df.to_csv(f"{parent_output_path}SciANN_collected_info_varying_HL.csv", index=False)
     
     # Export total training time to a text file
     if args.train[0]:

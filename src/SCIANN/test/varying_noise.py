@@ -60,6 +60,9 @@ def plot_varying_DataNoise():
     problem_types = [SaturatedGrowthModel, CompetitionModel, CompetitionModel]
     model_types = ["sg", "coexistence", "survival"]
 
+    # collector dataframes
+    collcted_df = pd.DataFrame(columns=['Time Limit', 'Noise Level', 'MSE Learned', 'MSE Test', 'Model Type', 'Learned Parameters'])
+
     # initialize the root directories
     rootdirs = []
     for model_type in model_types:
@@ -178,6 +181,18 @@ def plot_varying_DataNoise():
                 new_row = pd.DataFrame({'Time Limit': [dir_time_limit_str], 'Noise Level': [nl],
                                 'MSE Learned': [mse_learned], 'MSE Test': [mse_test]})
                 df = pd.concat([df, new_row], ignore_index=True)
+
+                if model_type == 'sg':
+                    # collect the file with file name 'res_C_learned'
+                    if 'res_C_learned' in filenames:
+                        param_learned = np.loadtxt(os.path.join(dirpath, 'res_C_learned'))
+                else:
+                    if 'res_learned_params' in filenames:
+                        param_learned = np.loadtxt(os.path.join(dirpath, 'res_learned_params'))
+                new_collcected_row = pd.DataFrame({'Time Limit': [dir_time_limit_str], 'Noise Level': [nl],
+                                'MSE Learned': [mse_learned], 'MSE Test': [mse_test], 'Model Type': [model_type], 'Learned Parameters': [param_learned]})
+                
+                collcted_df = pd.concat([collcted_df, new_collcected_row], ignore_index=True)
         
         df['MSE Learned'] = pd.to_numeric(df['MSE Learned'], errors='coerce')
         df['MSE Test'] = pd.to_numeric(df['MSE Test'], errors='coerce')
@@ -242,6 +257,8 @@ def plot_varying_DataNoise():
         plt.tight_layout()
         plt.savefig(f"{rootdir}varying__DataNoiseLevel__({model_type}).png")
 
+    # save collected df
+    collcted_df.to_csv(f"{parent_output_path}SciANN_collected_info_varying_noise.csv", index=False)
     training_time = time.time() - training_time
     print("Total Training Time: ",training_time)
     print("DONE")

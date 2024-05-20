@@ -58,6 +58,9 @@ def plot_varying_CollocationPoints():
     problem_types = [SaturatedGrowthModel, CompetitionModel, CompetitionModel]
     model_types = ["sg", "coexistence", "survival"]
 
+    # collector dataframes
+    collcted_df = pd.DataFrame(columns=['Time Limit', 'Collocation Points', 'MSE Learned', 'MSE Test', 'Model Type', 'Learned Parameters'])
+
     # initialize the root directories
     rootdirs = []
     for model_type in model_types:
@@ -177,6 +180,19 @@ def plot_varying_CollocationPoints():
                 new_row = pd.DataFrame({'Time Limit': [dir_time_limit_str], 'Collocation Points': [nCol],
                                 'MSE Learned': [mse_learned], 'MSE Test': [mse_test]})
                 df = pd.concat([df, new_row], ignore_index=True)
+
+                if model_type == 'sg':
+                    # collect the file with file name 'res_C_learned'
+                    if 'res_C_learned' in filenames:
+                        param_learned = np.loadtxt(os.path.join(dirpath, 'res_C_learned'))
+                else:
+                    if 'res_learned_params' in filenames:
+                        param_learned = np.loadtxt(os.path.join(dirpath, 'res_learned_params'))
+
+                new_collcected_row = pd.DataFrame({'Time Limit': [dir_time_limit_str], 'Collocation Points': [nCol],
+                                'MSE Learned': [mse_learned], 'MSE Test': [mse_test], 'Model Type': [model_type], 'Learned Parameters': [param_learned]})
+                
+                collcted_df = pd.concat([collcted_df, new_collcected_row], ignore_index=True)
         
         df['MSE Learned'] = pd.to_numeric(df['MSE Learned'], errors='coerce')
         df['MSE Test'] = pd.to_numeric(df['MSE Test'], errors='coerce')
@@ -246,6 +262,9 @@ def plot_varying_CollocationPoints():
     
     training_time = time.time() - training_time
     print(f"Total training time: {training_time} seconds")
+
+    # save collected df
+    collcted_df.to_csv(f"{parent_output_path}SciANN_collected_info_varying_CollocationPoints.csv", index=False)
     print("DONE")
 
 if __name__=="__main__":
