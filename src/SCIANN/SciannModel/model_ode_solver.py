@@ -251,7 +251,7 @@ def export_mse_mae(u_exact, u_test, u_learned, file_path=None):
     else:
         metrics_df.to_csv('metrics.csv', index=False)
 
-def plot_loss_landscape3D(file_path, ax=None):
+def plot_loss_landscape3D(file_path, ax=None, title=None):
     if ax is None:
         fig = plt.figure(figsize=(10, 8))
         ax = fig.add_subplot(111, projection='3d')
@@ -271,7 +271,10 @@ def plot_loss_landscape3D(file_path, ax=None):
     Z = z.values.reshape((resolution, resolution))
 
     surf = ax.plot_surface(X, Y, Z, cmap='viridis', edgecolor='none')
-    ax.set_title('3D Plot')
+    if title is not None:
+        ax.set_title(title)
+    else:
+        ax.set_title('3D Plot')
     ax.set_xlabel('Direction 1')
     ax.set_ylabel('Direction 2')
     ax.set_zlabel('Loss', labelpad=10)
@@ -284,7 +287,7 @@ def plot_loss_landscape3D(file_path, ax=None):
     
     return ax
 
-def plot_loss_landscape_contour(file_path, ax=None):
+def plot_loss_landscape_contour(file_path, ax=None, title=None):
     if ax is None:
         fig, ax = plt.subplots()
         own_figure = True
@@ -300,9 +303,12 @@ def plot_loss_landscape_contour(file_path, ax=None):
     X,Y = np.meshgrid(xi,yi)
     Z = griddata((x,y), z, (X,Y), method='cubic')
 
-    contour = plt.contour(X, Y, Z, levels=np.linspace(z.min(), z.max(), 100), cmap=plt.cm.viridis)
+    contour = ax.contour(X, Y, Z, levels=np.linspace(z.min(), z.max(), 100), cmap=plt.cm.viridis)
     fig.colorbar(contour, ax=ax, shrink=1, aspect=14)
-    ax.set_title('Contour Plot')
+    if title is not None:
+        ax.set_title(title)
+    else:
+        ax.set_title('Contour Plot')
     ax.set_xlabel('Direction 1')
     ax.set_ylabel('Direction 2')
     plt.setp(ax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor")

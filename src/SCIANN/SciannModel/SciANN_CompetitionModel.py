@@ -507,7 +507,7 @@ def plot():
     plt.savefig(f"{output_file_name}__Trajectories.png")
 
     # plot loss_landscape
-    file_path = output_folder + "\loss-landscape-history-landscape.csv"
+    file_path = output_folder + "/loss-landscape-history-landscape.csv"
     fig = plt.figure(figsize=(12, 4), dpi=300) 
     ax1 = fig.add_subplot(1, 2, 1, projection='3d') 
     ax2 = fig.add_subplot(1, 2, 2)
