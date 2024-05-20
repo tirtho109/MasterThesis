@@ -33,6 +33,7 @@ After activating the `sciann` environment, install the project's dependencies li
     ```bash
     pip install -r requirements.txt
     ```
+3. **Install Graphviz**: Graphviz is required for visualizing the structure of the model. For installation instructions, please visit the [Graphviz download page](https://graphviz.gitlab.io/download/).
 
 ## Final Steps
 
