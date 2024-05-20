@@ -45,7 +45,7 @@ def get_parser():
     parser.add_argument('-pl', '--pinns_layers', help='Num of pinns layers and neurons (default 3 layers [1, 5, 5, 5, 2])', type=int, nargs='+', default=[1, 5, 5, 5, 2])
     parser.add_argument('-lp','--lambda_phy', help='Weight for physics loss (default 1e0)', type=float, default=1e0)
     parser.add_argument('-ld','--lambda_data', help='Weight for data loss (default 1e0)', type=float, default=1e0)
-    parser.add_argument('-lp','--lambda_param', help='Weight for parameter loss (default 1e6)', type=float, default=1e6)
+    parser.add_argument('--lambda_param', help='Weight for parameter loss (default 1e6)', type=float, default=1e6)
 
     parser.add_argument('-nc','--num_collocation', help='Number of collocation points (default 200)', type=int, default=200)
     parser.add_argument('--sampler', help='Collocation sampler, one of ["grid", "uniform", "sobol", "halton"] (default: "grid")', type=str, nargs=1, default=['grid'])
