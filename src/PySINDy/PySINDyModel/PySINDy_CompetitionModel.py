@@ -25,7 +25,7 @@ parser.add_argument('-nT', '--nTest', help='# of test point(default 200)', type=
 parser.add_argument('--sparse', help='Sparsity of training data (default True)', type=bool, nargs=1, default=[False])
 parser.add_argument('-tl', '--time_limit', help='Time window for the training data (default [10, 24])', type=int, nargs=2, default=[10, 24])
 parser.add_argument('-nl', '--noise_level', help='Level of noise in training data (default 0.005)', type=float, default=0.005)
-parser.add_argument('-sf', '--show_figure', help='Show training data (default True)', type=bool, nargs=1, default=[True])
+parser.add_argument('-sf', '--show_figure', help='Show training data (default True)', type=bool, nargs=1, default=[False])
 parser.add_argument('-nt','--num_threshold', help='Number of threshold to be scanned (default 10)', type=int, default=10)
 parser.add_argument('-mt','--max_threshold', help='Maximum threshold to be scanned (default 1)', type=float, default=1)
 
@@ -152,9 +152,9 @@ def run_comp_model():
         original_eq = f"u' = u(1-{a1}*u - {a2}*v)\nv' = {r}*v(1-{b1}*u -{b2}*v)"
 
     if args.optimizer[0]=="SR3":
-        opt_out = ps.SR3(threshold=lambda_mse, thresholder=args.thresholder[0])
+        opt_out = ps.SR3(threshold=lambda_mse_sim, thresholder=args.thresholder[0])
     elif args.optimizer[0]=="SINDyPI":
-        opt_out = ps.SINDyPI(threshold=lambda_mse, thresholder=args.thresholder[0])
+        opt_out = ps.SINDyPI(threshold=lambda_mse_sim, thresholder=args.thresholder[0])
     model_out = ps.SINDy(feature_names=feature_names,
                          optimizer=opt_out,
                          feature_library=feature_library)
@@ -167,10 +167,13 @@ def run_comp_model():
                 original_model=CompetitionModel,
                 sindy_model=model_out, ax = ax1)
     
+    time_limit = args.time_limit
+    noise_level = args.noise_level
     sindy_eq = model_out.equations()
     ax2.axis('off') 
     lambda_mse_formatted = f"{lambda_mse:.3f}"
     equation_text = f"$\\lambda = {lambda_mse_formatted}$ \n"
+    equation_text += f"Time Window: [{time_limit[0]}, {time_limit[1]}], Noise Level: {noise_level}\n"
     equation_text += f"\nSINDy Model Equations:\n{'' if len(sindy_eq) == 0 else sindy_eq[0]}\n{'' if len(sindy_eq) < 2 else sindy_eq[1]}"
     equation_text += f"\n\nOriginal Model Equations:\n{original_eq}"
     ax2.text(0.5, 0.5, equation_text, ha='center', va='center', fontsize=10)

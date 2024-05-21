@@ -37,13 +37,13 @@ def clear_dir(directory):
             print(e)
 
 # Create training and test datasets
-def create_datasets(model, tend, numx, nTest, initial_conditions, params, training_time_limit, noise_level, show_figure=False, save_path=None, sparse=False):
+def create_datasets(model, tend, numx, nTest, initial_conditions, params, training_time_limit, noise_level, show_figure=False, save_path=None, sparse=False, seed=0):
     t_span = (0, tend)
     if training_time_limit[0] < 0:
         training_time_limit[0] = 0
     if training_time_limit[1] > tend:
         training_time_limit[1] = tend
-    #np.random.seed(0)
+    np.random.seed(seed)
     if sparse:
          t_eval = np.sort(np.random.uniform(training_time_limit[0], training_time_limit[1], numx))
          t_eval[0]  = 0.0
@@ -57,6 +57,7 @@ def create_datasets(model, tend, numx, nTest, initial_conditions, params, traini
     x_train = sol.y.T
 
     noise = np.random.normal(0, noise_level, x_train.shape)
+    noise[0,:] = 0 # no noise in the initial conditions
     x_train_noisy = x_train + noise
     u_train = x_train_noisy[:, 0]
     if model==CompetitionModel:
@@ -74,8 +75,11 @@ def create_datasets(model, tend, numx, nTest, initial_conditions, params, traini
         if model==CompetitionModel:
             plt.scatter(t_train, v_train, label='v(t)')
         plt.xlabel('Time (t)')
-        plt.ylabel('u')
-        plt.title('Competition Model Data')
+        plt.ylabel('Population')
+        if model==CompetitionModel:
+            plt.title(f'Comp Model Training Data, n-{noise_level}, t-{training_time_limit}')
+        else:
+            plt.title(f'SGModel Training Data, n-{noise_level}, t-{training_time_limit}')
         plt.legend()
         if save_path:
             if os.path.basename(save_path) == '':
@@ -87,9 +91,17 @@ def create_datasets(model, tend, numx, nTest, initial_conditions, params, traini
     return x_train_noisy, t_train, x_test, t_test
 
 def export_mse_mae(sindy_model, x_test, t_test, file_path=None):
-    dt = t_test[1] - t_test[0]
-    mse = sindy_model.score(x_test, t=dt, metric=mean_squared_error)
-    mae = sindy_model.score(x_test, t=dt, metric=mean_absolute_error)
+    x_test_sim = sindy_model.simulate(x_test[0,:], t_test, integrator="odeint")
+    if np.any(x_test_sim > 1e4):
+        x_test_sim = np.clip(x_test_sim, 0, 10)
+    # Calculate MSE
+    squared_errors = (x_test - x_test_sim) ** 2
+    mse = np.mean(squared_errors)
+
+    # Calculate MAE
+    absolute_errors = np.abs(x_test - x_test_sim)
+    mae = np.mean(absolute_errors)
+
     metrics_df = pd.DataFrame({
         'Metric': ['MSE', 'MAE'],
         'Test': [mse, mae],
@@ -98,3 +110,35 @@ def export_mse_mae(sindy_model, x_test, t_test, file_path=None):
         metrics_df.to_csv(file_path, index=False)
     else:
         metrics_df.to_csv('metrics.csv', index=False)
+
+def export_coefficients(coefficients, file_path=None):
+    u_coefs = coefficients[0]
+    alpha_names = [f'alpha_{i+1}' for i in range(len(u_coefs))]
+    
+    df_data = {alpha: [coef] for alpha, coef in zip(alpha_names, u_coefs)}
+    
+    if len(coefficients) > 1:
+        v_coefs = coefficients[1]
+        beta_names = [f'beta_{i+1}' for i in range(len(v_coefs))]
+        for beta, coef in zip(beta_names, v_coefs):
+            df_data[beta] = [coef]
+
+    coefficients_df = pd.DataFrame(df_data)
+    
+    # Save to CSV
+    if file_path:
+        coefficients_df.to_csv(file_path, index=False)
+        print(f"Coefficients exported to {file_path}")
+    else:
+        print(coefficients_df)
+
+def export_thereshold(optimizer, file_path=None):
+    threshold = optimizer.threshold
+    threshold_df = pd.DataFrame({'Threshold': [threshold]})
+    
+    if file_path:
+        threshold_df.to_csv(file_path, index=False)
+        print(f"Threshold exported to {file_path}")
+    else:
+        print(threshold_df)
+

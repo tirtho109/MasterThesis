@@ -110,7 +110,7 @@ def run_sg_model():
                             lambda u : f"{u}",
                             lambda u : f"{u}^2"
                          ]
-         custom_library = CustomLibrary(library_functions=custom_functions, 
+         feature_library = CustomLibrary(library_functions=custom_functions, 
                                         function_names=function_names, 
                                         include_bias=False).fit(x_train)
          
@@ -136,9 +136,9 @@ def run_sg_model():
     original_eq = f"u' = u(u -{C}*u)"
     # extract model based on lambda_mse
     if args.optimizer[0]=="SR3":
-        opt_out = ps.SR3(threshold=lambda_mse, thresholder=args.thresholder[0])
+        opt_out = ps.SR3(threshold=lambda_mse_sim, thresholder=args.thresholder[0])
     elif args.optimizer[0]=="SINDyPI":
-        opt_out = ps.SINDyPI(threshold=lambda_mse, thresholder=args.thresholder[0])
+        opt_out = ps.SINDyPI(threshold=lambda_mse_sim, thresholder=args.thresholder[0])
     model_out = ps.SINDy(feature_names=feature_names,
                          optimizer=opt_out,
                          feature_library=feature_library)
