@@ -27,6 +27,7 @@ This Python script, `PySINDy_SaturatedGrowthModel.py`, is designed to train a Sa
 Execute with:
 ```bash
 python PySINDy_SaturatedGrowthModel.py
+```
 
 ## Additional Arguments
 - ´-ic´, ´--initial_conditions´: Initial conditions (u0) for the model. Default: [0.01].

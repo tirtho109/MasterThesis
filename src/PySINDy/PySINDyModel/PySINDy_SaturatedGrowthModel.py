@@ -14,7 +14,7 @@ parser = argparse.ArgumentParser(description='''
 )
 
 # arguments for training data generator
-parser.add_argument('-ic', '--initial_conditions', help='Initial conditions(u0) for the model (default [2,1])', type=float, default=0.01)
+parser.add_argument('-ic', '--initial_conditions', help='Initial conditions(u0) for the model (default 0.01)', type=float, default=0.01)
 parser.add_argument('--tend', help='End time for the model simulation (default 24)', type=int, default=24)
 
 # arguments for training data generator

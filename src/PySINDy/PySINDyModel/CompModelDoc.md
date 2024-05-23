@@ -24,9 +24,9 @@ This Python script, `PySINDy_CompetitionModel.py`, is designed to train a Compet
 - Visualization capabilities for model analysis.
 
 ## Usage
-Execute with:
 ```bash
 python PySINDy_CompetitionModel.py
+```
 
 ## Additional Arguments
 - ´-ic´, ´--initial_conditions´: Initial conditions (u0, v0) for the model. Default: [2,1].
