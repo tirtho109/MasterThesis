@@ -28,7 +28,7 @@ To implement the models using SciANN, follow these steps:
 
 - **Create CustomSciModel:** Create subclass `CustomSciModel` from the `SciModel` class to customize loss weights for various terms in the loss function.
   - **Saturated Growth Model:** Two custom loss weights: $\lambda_{\text{phy}}$ and $\lambda_{\text{data}}$ for the ODE loss and data loss, respectively.
-  - **Competition Model:** Four custom loss weights: $\lambda_{\text{phy\_1}}$, $\lambda_{\text{phy\_2}}$, $\lambda_{\text{data\_1}}$, and $\lambda_{\text{data\_2}}$. For simplicity, we use $\lambda_{\text{phy}}$ and $\lambda_{\text{data}}$ as loss weights, keeping the weights the same for all ODEs and data.
+  - **Competition Model:** Four custom loss weights: $\lambda_{\text{phy1}}$, $\lambda_{\text{phy2}}$, $\lambda_{\text{data1}}$, and $\lambda_{\text{data2}}$. $1,2$ represents $u,v$. For simplicity, we use $\lambda_{\text{phy}}$ and $\lambda_{\text{data}}$ as loss weights, keeping the weights the same for all ODEs and data.
 
 - **Setup the Model:** Initialize the model with inputs, targets, and loss functions, and configure training parameters. Both models have `t` as input.
   - **Saturated Growth Model:** One ODE constraint and one data constraint.
