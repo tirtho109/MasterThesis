@@ -40,8 +40,8 @@ def _collect_weights(all_params):
         for subdomain_biases in b:
             flattened_biases = jnp.array(subdomain_biases).flatten()
             x_values.append(jnp.array(flattened_biases))
-    param_values = jnp.array([float(problem_params[key]) for key in problem_params])
-    x_values.append(jnp.array(param_values))
+    # param_values = jnp.array([float(problem_params[key]) for key in problem_params])
+    # x_values.append(jnp.array(param_values))
     return x_values
 
 def _update_weights(all_params, x_values):
@@ -68,10 +68,10 @@ def _update_weights(all_params, x_values):
 
         all_params["trainable"]["network"]["subdomain"]["layers"][layer_idx] = (new_w, new_b)
 
-        # set problem_params
-        problem_keys = list(all_params["trainable"]["problem"].keys())
-        for i, key in enumerate(problem_keys):
-            all_params["trainable"]["problem"][key] = jnp.array(x_values[idx][i], dtype=jnp.float32)
+        # # set problem_params
+        # problem_keys = list(all_params["trainable"]["problem"].keys())
+        # for i, key in enumerate(problem_keys):
+        #     all_params["trainable"]["problem"][key] = jnp.array(x_values[idx][i], dtype=jnp.float32)
         return all_params
     
 
